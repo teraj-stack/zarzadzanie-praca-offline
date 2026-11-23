@@ -17,6 +17,7 @@
   ];
 
   const MINDMAP_STICKERS = [
+    { id: "mickey", label: "Myszka Miki", bg: "linear-gradient(135deg,#1e293b,#ef4444)", svg: `<svg viewBox="0 0 24 24" fill="#fff"><circle cx="6.5" cy="7" r="3.6"/><circle cx="17.5" cy="7" r="3.6"/><circle cx="12" cy="14" r="6"/></svg>` },
     { id: "heart", label: "Serduszko", bg: "linear-gradient(135deg,#fb7185,#ec4899)", svg: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.7-9.2-9.1C1.7 8.4 3.5 5 6.8 5c2 0 3.6 1.1 5.2 2.9C13.6 6.1 15.2 5 17.2 5c3.3 0 5.1 3.4 4 6.4-1.7 4.4-9.2 9.1-9.2 9.1Z"/></svg>` },
     { id: "smile", label: "Uśmiech", bg: "linear-gradient(135deg,#facc15,#fb923c)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2" fill="#fff"/><circle cx="15" cy="10" r="1.2" fill="#fff"/><path d="M8.5 14.5c1 1.6 2.2 2.3 3.5 2.3s2.5-.7 3.5-2.3"/></svg>` },
     { id: "star", label: "Gwiazdka", bg: "linear-gradient(135deg,#fde047,#f59e0b)", svg: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9Z"/></svg>` },
@@ -490,7 +491,7 @@
       }
       @keyframes mindmap-firefly-flow {
         0% {
-          stroke-dashoffset: 240;
+          stroke-dashoffset: 100;
         }
         100% {
           stroke-dashoffset: 0;
@@ -499,17 +500,300 @@
       .mindmap-edges path.mindmap-firefly {
         fill: none;
         vector-effect: non-scaling-stroke;
-        stroke: #fff9c4;
-        stroke-width: 6.5px !important;
+        stroke: #fef08a;
+        stroke-width: 7px !important;
         stroke-linecap: round;
-        stroke-dasharray: 12 228;
-        opacity: 0.98 !important;
-        filter: drop-shadow(0 0 6px #fde047) drop-shadow(0 0 12px #facc15);
-        animation: mindmap-firefly-flow 3.2s linear infinite;
+        stroke-dasharray: 14 86;
+        opacity: 1 !important;
+        filter: drop-shadow(0 0 5px #fde047) drop-shadow(0 0 11px #f59e0b);
+        animation: mindmap-firefly-flow 2.8s linear infinite;
         pointer-events: none;
+      }
+      /* Focus Drawer & Motion Library (natural easing) */
+      :root {
+        --bm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+        --bm-duration: 420ms;
+      }
+      .bm-focus-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 9500;
+        background: rgba(2, 6, 23, 0.55);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        transition: opacity var(--bm-duration) var(--bm-ease);
+        display: flex;
+        justify-content: flex-end;
+      }
+      .bm-focus-backdrop.is-open {
+        opacity: 1;
+      }
+      .bm-focus-drawer {
+        width: min(560px, 94vw);
+        height: 100vh;
+        background: #0f172a;
+        color: #f8fafc;
+        border-left: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.55);
+        padding: 24px 26px;
+        overflow-y: auto;
+        transform: translateX(104%);
+        transition: transform var(--bm-duration) var(--bm-ease);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .bm-focus-backdrop.is-open .bm-focus-drawer {
+        transform: translateX(0);
+      }
+      .bm-bezier-box {
+        background: #020617;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 14px;
+        padding: 14px;
+      }
+      .bm-bezier-svg {
+        width: 100%;
+        max-width: 260px;
+        height: 200px;
+        display: block;
+        margin: 0 auto;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      .bm-preset-chip {
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(30, 41, 59, 0.7);
+        color: #e2e8f0;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .bm-preset-chip:hover {
+        background: #38bdf8;
+        color: #020617;
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function loadMotionCurve() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("bm_motion_curve_v1") || "null");
+      if (saved && typeof saved.x1 === "number") return saved;
+    } catch {}
+    return { x1: 0.16, y1: 1, x2: 0.3, y2: 1, duration: 420, name: "Spokojny Fokus" };
+  }
+
+  function applyMotionCurve(c) {
+    const css = `cubic-bezier(${c.x1.toFixed(2)}, ${c.y1.toFixed(2)}, ${c.x2.toFixed(2)}, ${c.y2.toFixed(2)})`;
+    document.documentElement.style.setProperty("--bm-ease", css);
+    document.documentElement.style.setProperty("--bm-duration", `${Math.round(c.duration)}ms`);
+    try { localStorage.setItem("bm_motion_curve_v1", JSON.stringify(c)); } catch {}
+    return css;
+  }
+
+  applyMotionCurve(loadMotionCurve());
+
+  function openFocusDrawer(task) {
+    if (!task) return;
+    const old = document.getElementById("bm-focus-backdrop");
+    if (old) old.remove();
+
+    const curve = loadMotionCurve();
+    const cssCurve = applyMotionCurve(curve);
+
+    const backdrop = document.createElement("div");
+    backdrop.id = "bm-focus-backdrop";
+    backdrop.className = "bm-focus-backdrop";
+
+    const labelsHtml = (task.labels || [])
+      .map((l) => `<span style="padding:3px 9px;border-radius:999px;background:rgba(56,189,248,0.16);color:#7dd3fc;font-size:12px;font-weight:600">${escapeHtml(l)}</span>`)
+      .join(" ");
+
+    backdrop.innerHTML = `
+      <aside class="bm-focus-drawer" role="dialog" aria-label="Szczegóły zadania">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid rgba(148,163,184,0.2);padding-bottom:14px">
+          <div>
+            <div style="font-size:12px;color:#94a3b8;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">
+              Zadanie #${task.id} · ${escapeHtml(task.assignee || "BM Clinic")} · Priorytet: ${escapeHtml(task.priority || "Średni")}
+            </div>
+            <h2 style="margin:6px 0 0;font-size:22px;line-height:1.3;color:#fff">${escapeHtml(task.title)}</h2>
+          </div>
+          <button type="button" id="bm-focus-close" class="btn btn-ghost" style="font-size:18px;padding:4px 10px" title="Zamknij (Esc)">✕</button>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          ${["Todo", "In Progress", "Done"]
+            .map(
+              (st) =>
+                `<button type="button" class="bm-status-btn" data-st="${st}" style="padding:6px 12px;border-radius:10px;border:1px solid ${
+                  task.status === st ? "#38bdf8" : "rgba(148,163,184,0.25)"
+                };background:${
+                  task.status === st ? "rgba(56,189,248,0.22)" : "rgba(15,23,42,0.8)"
+                };color:#f8fafc;font-size:12px;font-weight:700;cursor:pointer">${
+                  st === "Todo" ? "Do zrobienia" : st === "In Progress" ? "W trakcie" : "Gotowe ✓"
+                }</button>`
+            )
+            .join("")}
+          ${labelsHtml}
+        </div>
+
+        <div style="background:rgba(2,6,23,0.65);border:1px solid rgba(148,163,184,0.18);border-radius:14px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">
+            Co znajduje się w tym module i co jest do zrobienia:
+          </div>
+          <textarea id="bm-focus-body" rows="5" style="width:100%;background:transparent;border:none;color:#e2e8f0;font-size:15px;line-height:1.6;resize:vertical;outline:none">${escapeHtml(task.body || "")}</textarea>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button type="button" id="bm-focus-save" class="btn btn-primary">Zapisz opis</button>
+          <button type="button" id="bm-focus-edit" class="btn btn-secondary">Pełna edycja</button>
+          ${task.url ? `<button type="button" id="bm-focus-preview" class="btn btn-secondary">👁️ Podgląd strony</button><a href="${escapeHtml(task.url)}" target="_blank" rel="noopener" class="btn btn-ghost">↗ Otwórz w karcie</a>` : ""}
+        </div>
+
+        <details class="bm-bezier-box" id="bm-bezier-details">
+          <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#7dd3fc">
+            ✨ Wykres krzywej akceleracji (biblioteka animacji) — <code id="bm-bezier-code">${cssCurve}</code>
+          </summary>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <button type="button" class="bm-preset-chip" data-preset="0.16,1,0.3,1,420">Spokojny Fokus</button>
+              <button type="button" class="bm-preset-chip" data-preset="0.22,1,0.36,1,380">Jedwabne Wejście</button>
+              <button type="button" class="bm-preset-chip" data-preset="0.34,1.35,0.64,1,480">Naturalna Sprężyna</button>
+              <button type="button" class="bm-preset-chip" data-preset="0.65,0,0.35,1,360">Płynny Start-Stop</button>
+            </div>
+            <svg class="bm-bezier-svg" id="bm-bezier-svg" viewBox="-20 -30 240 260">
+              <rect x="0" y="0" width="200" height="200" fill="#0f172a" stroke="#334155" stroke-width="1.2" rx="8"/>
+              <line x1="0" y1="200" x2="200" y2="0" stroke="#1e293b" stroke-dasharray="4 4"/>
+              <line id="bm-h1" x1="0" y1="200" x2="32" y2="0" stroke="#38bdf8" stroke-width="1.5"/>
+              <line id="bm-h2" x1="200" y1="0" x2="60" y2="0" stroke="#f472b6" stroke-width="1.5"/>
+              <path id="bm-curve-path" d="M 0 200 C 32 0, 60 0, 200 0" fill="none" stroke="#fde047" stroke-width="3.5" stroke-linecap="round"/>
+              <circle cx="0" cy="200" r="4.5" fill="#94a3b8"/>
+              <circle cx="200" cy="0" r="4.5" fill="#94a3b8"/>
+              <circle id="bm-p1" cx="32" cy="0" r="9" fill="#38bdf8" stroke="#fff" stroke-width="2" style="cursor:grab"/>
+              <circle id="bm-p2" cx="60" cy="0" r="9" fill="#f472b6" stroke="#fff" stroke-width="2" style="cursor:grab"/>
+            </svg>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:#cbd5e1">
+              <label style="flex:1">Czas: <strong id="bm-dur-val">${Math.round(curve.duration)} ms</strong>
+                <input type="range" id="bm-dur-range" min="180" max="900" step="20" value="${Math.round(curve.duration)}" style="width:100%"/>
+              </label>
+              <button type="button" id="bm-test-anim" class="btn btn-secondary" style="font-size:12px">▶ Testuj wysunięcie</button>
+            </div>
+          </div>
+        </details>
+      </aside>
+    `;
+
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add("is-open"));
+
+    const close = () => {
+      backdrop.classList.remove("is-open");
+      setTimeout(() => backdrop.remove(), Math.min(curve.duration, 500));
+      document.removeEventListener("keydown", onKey);
+    };
+    const onKey = (ev) => { if (ev.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    backdrop.addEventListener("click", (ev) => { if (ev.target === backdrop) close(); });
+    backdrop.querySelector("#bm-focus-close").addEventListener("click", close);
+
+    backdrop.querySelectorAll(".bm-status-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = tasks.find((x) => x.id === task.id);
+        if (target) {
+          target.status = btn.dataset.st;
+          saveTasks();
+          render();
+          openFocusDrawer(target);
+        }
+      });
+    });
+
+    backdrop.querySelector("#bm-focus-save").addEventListener("click", () => {
+      const target = tasks.find((x) => x.id === task.id);
+      if (target) {
+        target.body = backdrop.querySelector("#bm-focus-body").value.trim();
+        saveTasks();
+        render();
+        showToast(`Zapisano opis zadania #${task.id}`);
+      }
+    });
+
+    backdrop.querySelector("#bm-focus-edit").addEventListener("click", () => {
+      close();
+      openModal(task.id);
+    });
+
+    const prevBtn = backdrop.querySelector("#bm-focus-preview");
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        close();
+        openFullscreenPreview(task);
+      });
+    }
+
+    // Interactive Cubic-Bézier curve editor
+    const svg = backdrop.querySelector("#bm-bezier-svg");
+    const p1El = backdrop.querySelector("#bm-p1");
+    const p2El = backdrop.querySelector("#bm-p2");
+    const h1El = backdrop.querySelector("#bm-h1");
+    const h2El = backdrop.querySelector("#bm-h2");
+    const pathEl = backdrop.querySelector("#bm-curve-path");
+    const codeEl = backdrop.querySelector("#bm-bezier-code");
+    const durRange = backdrop.querySelector("#bm-dur-range");
+    const durVal = backdrop.querySelector("#bm-dur-val");
+
+    const syncCurveUI = () => {
+      const x1 = curve.x1 * 200;
+      const y1 = 200 - curve.y1 * 200;
+      const x2 = curve.x2 * 200;
+      const y2 = 200 - curve.y2 * 200;
+      p1El.setAttribute("cx", x1); p1El.setAttribute("cy", y1);
+      p2El.setAttribute("cx", x2); p2El.setAttribute("cy", y2);
+      h1El.setAttribute("x2", x1); h1El.setAttribute("y2", y1);
+      h2El.setAttribute("x2", x2); h2El.setAttribute("y2", y2);
+      pathEl.setAttribute("d", `M 0 200 C ${x1} ${y1}, ${x2} ${y2}, 200 0`);
+      durVal.textContent = `${Math.round(curve.duration)} ms`;
+      durRange.value = String(Math.round(curve.duration));
+      codeEl.textContent = applyMotionCurve(curve);
+    };
+    syncCurveUI();
+
+    let activePt = null;
+    const movePt = (ev) => {
+      if (!activePt) return;
+      const rect = svg.getBoundingClientRect();
+      const nx = Math.max(0, Math.min(1, ((ev.clientX - rect.left) / rect.width * 240 - 20) / 200));
+      const ny = Math.max(-0.3, Math.min(1.4, (200 - ((ev.clientY - rect.top) / rect.height * 260 - 30)) / 200));
+      if (activePt === 1) { curve.x1 = nx; curve.y1 = ny; }
+      else { curve.x2 = nx; curve.y2 = ny; }
+      syncCurveUI();
+    };
+    p1El.addEventListener("pointerdown", (ev) => { ev.preventDefault(); activePt = 1; });
+    p2El.addEventListener("pointerdown", (ev) => { ev.preventDefault(); activePt = 2; });
+    window.addEventListener("pointermove", movePt);
+    window.addEventListener("pointerup", () => { activePt = null; });
+
+    durRange.addEventListener("input", () => {
+      curve.duration = Number(durRange.value);
+      syncCurveUI();
+    });
+
+    backdrop.querySelectorAll(".bm-preset-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const [x1, y1, x2, y2, dur] = chip.dataset.preset.split(",").map(Number);
+        curve.x1 = x1; curve.y1 = y1; curve.x2 = x2; curve.y2 = y2; curve.duration = dur;
+        syncCurveUI();
+      });
+    });
+
+    backdrop.querySelector("#bm-test-anim").addEventListener("click", () => {
+      backdrop.classList.remove("is-open");
+      setTimeout(() => backdrop.classList.add("is-open"), 180);
+    });
   }
 
   function openFullscreenPreview(task) {
@@ -1554,9 +1838,10 @@
       // Animated firefly showing flow direction (root -> module -> task)
       const firefly = document.createElementNS(svgNS, "path");
       firefly.setAttribute("d", dStr);
+      firefly.setAttribute("pathLength", "100");
       firefly.setAttribute("class", "mindmap-firefly");
-      firefly.style.animationDelay = `${-((idx * 0.37) % 3.2).toFixed(2)}s`;
-      firefly.style.animationDuration = e.depth === 1 ? "2.6s" : "3.4s";
+      firefly.style.animationDelay = `${-((idx * 0.33) % 2.8).toFixed(2)}s`;
+      firefly.style.animationDuration = e.depth === 1 ? "2.4s" : "3.1s";
       e._fireflyEl = firefly;
       svgEl.appendChild(firefly);
     });
@@ -1854,13 +2139,7 @@
         el.addEventListener("click", (ev) => {
           ev.stopPropagation();
           if (suppressNextClick) { suppressNextClick = false; return; }
-          if (t.url) {
-            mindmapPreviewTaskId = t.id;
-            mindmapPreviewOpen = true;
-            render();
-          } else {
-            openModal(t.id);
-          }
+          openFocusDrawer(t);
         });
         el.addEventListener("dblclick", (ev) => {
           ev.stopPropagation();
