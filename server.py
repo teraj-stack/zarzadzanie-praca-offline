@@ -57,7 +57,16 @@ class LocalOfflineHandler(SimpleHTTPRequestHandler):
         pass
 
 
+import socket
+
+class DualStackHTTPServer(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
+    def server_bind(self):
+        self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        super().server_bind()
+
+
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), LocalOfflineHandler)
-    print(f"Local offline server listening on http://127.0.0.1:{PORT} (saving to {DATA_FILE})", flush=True)
+    server = DualStackHTTPServer(("::", PORT), LocalOfflineHandler)
+    print(f"Local offline server listening on http://localhost:{PORT} and http://127.0.0.1:{PORT} (saving to {DATA_FILE})", flush=True)
     server.serve_forever()

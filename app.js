@@ -8,14 +8,23 @@
   const MINDMAP_CUSTOM_BG_KEY = "managing_work_mindmap_custom_bg_v1";
 
   const MINDMAP_EMOJIS = [
-    "🏥", "🩺", "🧬", "💊", "❤️", "✨", "🚀",
-    "🎯", "💡", "🔥", "⭐", "✅", "⚡", "⚠️",
-    "📅", "🗺️", "🧩", "🛠️", "🎨", "📸", "🎬",
-    "🔊", "💬", "📊", "📈", "📝", "📁", "🔒",
-    "🌐", "💻", "📱", "🤝", "👥", "🏆", "🎉",
+    "💖", "🩷", "❤️", "🌈", "🦋", "🌸", "☀️",
+    "☁️", "⭐", "✨", "😊", "🎀", "👑", "🍀",
+    "🧸", "🫧", "🏥", "🩺", "🧬", "💊", "🚀",
+    "🎯", "💡", "🔥", "✅", "⚡", "⚠️", "📅",
+    "🗺️", "🧩", "🛠️", "🎨", "📸", "🎬", "🔊",
+    "💬", "📊", "📝", "🔒", "🌐", "📱", "🏆", "🎉",
   ];
 
   const MINDMAP_STICKERS = [
+    { id: "heart", label: "Serduszko", bg: "linear-gradient(135deg,#fb7185,#ec4899)", svg: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.7-9.2-9.1C1.7 8.4 3.5 5 6.8 5c2 0 3.6 1.1 5.2 2.9C13.6 6.1 15.2 5 17.2 5c3.3 0 5.1 3.4 4 6.4-1.7 4.4-9.2 9.1-9.2 9.1Z"/></svg>` },
+    { id: "smile", label: "Uśmiech", bg: "linear-gradient(135deg,#facc15,#fb923c)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2" fill="#fff"/><circle cx="15" cy="10" r="1.2" fill="#fff"/><path d="M8.5 14.5c1 1.6 2.2 2.3 3.5 2.3s2.5-.7 3.5-2.3"/></svg>` },
+    { id: "star", label: "Gwiazdka", bg: "linear-gradient(135deg,#fde047,#f59e0b)", svg: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9Z"/></svg>` },
+    { id: "rainbow", label: "Tęcza", bg: "linear-gradient(135deg,#38bdf8,#a855f7,#f472b6)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M6.5 17a5.5 5.5 0 0 1 11 0"/><path d="M10 17a2 2 0 0 1 4 0"/></svg>` },
+    { id: "flower", label: "Kwiatek", bg: "linear-gradient(135deg,#f472b6,#fb7185)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="2.6" fill="#fff"/><circle cx="12" cy="6.2" r="2.4"/><circle cx="17.5" cy="10.2" r="2.4"/><circle cx="15.4" cy="16.6" r="2.4"/><circle cx="8.6" cy="16.6" r="2.4"/><circle cx="6.5" cy="10.2" r="2.4"/></svg>` },
+    { id: "butterfly", label: "Motylek", bg: "linear-gradient(135deg,#c084fc,#38bdf8)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v11"/><path d="M12 10C9.5 6 4 6 4 10c0 2.5 2.5 3.5 5 3.5-2 1-3 2.5-2 4 1.2 1.8 4 1 5-1.5"/><path d="M12 10c2.5-4 8-4 8 0 0 2.5-2.5 3.5-5 3.5 2 1 3 2.5 2 4-1.2 1.8-4 1-5-1.5"/></svg>` },
+    { id: "cloud", label: "Chmurka", bg: "linear-gradient(135deg,#7dd3fc,#60a5fa)", svg: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 6.7 8.8 3.8 3.8 0 0 0 7 18Z"/></svg>` },
+    { id: "crown", label: "Korona", bg: "linear-gradient(135deg,#fbbf24,#f43f5e)", svg: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"><path d="m3 18 1.5-10 5 4.5L12 6l2.5 6.5 5-4.5L21 18Z"/></svg>` },
     { id: "clinic", label: "Klinika", bg: "linear-gradient(135deg,#0ea5e9,#2563eb)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>` },
     { id: "target", label: "Cel / Priorytet", bg: "linear-gradient(135deg,#ef4444,#f97316)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg>` },
     { id: "idea", label: "Pomysł", bg: "linear-gradient(135deg,#f59e0b,#eab308)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.7.5 1.1 1.2 1.2 2.1h4.6c.1-.9.5-1.6 1.2-2.1A6 6 0 0 0 12 3Z"/></svg>` },
@@ -464,9 +473,40 @@
       .mn-open-link {
         font-size: 12px !important;
       }
-      .mindmap-edges path {
-        stroke-width: 3px !important;
-        opacity: 0.88 !important;
+      .mindmap-edges path.mindmap-edge {
+        vector-effect: non-scaling-stroke;
+        stroke-linecap: round;
+        opacity: 0.94 !important;
+        filter: drop-shadow(0 0 3px rgba(15, 23, 42, 0.55));
+      }
+      .mindmap-edges path.mindmap-edge-depth-1 {
+        stroke-width: 5.5px !important;
+      }
+      .mindmap-edges path.mindmap-edge-depth-2 {
+        stroke-width: 3.8px !important;
+      }
+      .mindmap-edges path.mindmap-edge-depth-3 {
+        stroke-width: 3.2px !important;
+      }
+      @keyframes mindmap-firefly-flow {
+        0% {
+          stroke-dashoffset: 240;
+        }
+        100% {
+          stroke-dashoffset: 0;
+        }
+      }
+      .mindmap-edges path.mindmap-firefly {
+        fill: none;
+        vector-effect: non-scaling-stroke;
+        stroke: #fff9c4;
+        stroke-width: 6.5px !important;
+        stroke-linecap: round;
+        stroke-dasharray: 12 228;
+        opacity: 0.98 !important;
+        filter: drop-shadow(0 0 6px #fde047) drop-shadow(0 0 12px #facc15);
+        animation: mindmap-firefly-flow 3.2s linear infinite;
+        pointer-events: none;
       }
     `;
     document.head.appendChild(style);
@@ -1497,17 +1537,28 @@
       ev.target.value = "";
     });
 
-    // Draw organic MindNode Bézier curves
+    // Draw organic MindNode Bézier curves + glowing directional fireflies
     const svgNS = "http://www.w3.org/2000/svg";
-    layout.edges.forEach((e) => {
+    layout.edges.forEach((e, idx) => {
+      const dStr = getEdgePathD(e);
       const path = document.createElementNS(svgNS, "path");
-      path.setAttribute("d", getEdgePathD(e));
-      path.setAttribute("class", "mindmap-edge");
+      path.setAttribute("d", dStr);
+      const depthClass = e.depth === 1 ? "mindmap-edge-depth-1" : e.depth === 2 ? "mindmap-edge-depth-2" : "mindmap-edge-depth-3";
+      path.setAttribute("class", `mindmap-edge ${depthClass}`);
       path.setAttribute("stroke", e.color);
-      path.setAttribute("stroke-width", e.depth === 1 ? "4.2" : e.depth === 2 ? "2.4" : "1.8");
-      path.setAttribute("stroke-opacity", e.depth === 1 ? "0.9" : "0.72");
+      path.setAttribute("stroke-width", e.depth === 1 ? "5.5" : e.depth === 2 ? "3.8" : "3.2");
+      path.setAttribute("stroke-opacity", "0.94");
       e._pathEl = path;
       svgEl.appendChild(path);
+
+      // Animated firefly showing flow direction (root -> module -> task)
+      const firefly = document.createElementNS(svgNS, "path");
+      firefly.setAttribute("d", dStr);
+      firefly.setAttribute("class", "mindmap-firefly");
+      firefly.style.animationDelay = `${-((idx * 0.37) % 3.2).toFixed(2)}s`;
+      firefly.style.animationDuration = e.depth === 1 ? "2.6s" : "3.4s";
+      e._fireflyEl = firefly;
+      svgEl.appendChild(firefly);
     });
 
     // Helper: collect node + visible descendants for subtree dragging
@@ -1533,7 +1584,9 @@
 
     function updateAllEdges() {
       layout.edges.forEach((e) => {
-        if (e._pathEl) e._pathEl.setAttribute("d", getEdgePathD(e));
+        const dStr = getEdgePathD(e);
+        if (e._pathEl) e._pathEl.setAttribute("d", dStr);
+        if (e._fireflyEl) e._fireflyEl.setAttribute("d", dStr);
       });
     }
 
