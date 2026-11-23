@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zarządzanie Pracą — Offline Workspace</title>
+  <link rel="stylesheet" href="styles.css?v=mindnode7" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="18" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="11" rx="1.5"/>
+          </svg>
+        </span>
+        <div>
+          <h1>Zarządzanie Pracą</h1>
+          <span class="subtitle">teraj-stack/managing-work</span>
+        </div>
+      </div>
+      <span class="offline-pill" title="Wszystkie dane zapisywane lokalnie w przeglądarce — działa bez internetu">
+        <span class="dot"></span> Tryb Offline
+      </span>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="btn-new-task" class="btn btn-primary">+ Nowe zadanie</button>
+      <button id="btn-export" class="btn btn-secondary" title="Eksportuj do pliku JSON">Eksport JSON</button>
+      <label class="btn btn-secondary file-btn" title="Importuj z pliku JSON">
+        Import JSON
+        <input type="file" id="input-import" accept=".json,application/json" hidden />
+      </label>
+      <button id="btn-reset" class="btn btn-ghost" title="Przywróć oryginalne 21 zadań z GitHuba">Reset</button>
+      <button id="btn-theme" class="btn btn-ghost icon-only" title="Przełącz motyw jasny/ciemny" aria-label="Przełącz motyw">◐</button>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <nav class="view-tabs" role="tablist">
+      <button class="tab active" data-view="mindmap" role="tab">Mapa Myśli (MindNode)</button>
+      <button class="tab" data-view="board" role="tab">Tablica Kanban</button>
+      <button class="tab" data-view="table" role="tab">Planowanie (Tabela)</button>
+      <button class="tab" data-view="roadmap" role="tab">Roadmapa</button>
+    </nav>
+
+    <div class="filters">
+      <input type="search" id="filter-search" class="input search-input" placeholder="Szukaj po tytule, #numerze lub opisie..." />
+      <select id="filter-type" class="select" aria-label="Filtr typu">
+        <option value="ALL">Typ: Wszystkie</option>
+        <option value="Feature">Feature</option>
+        <option value="Bug">Bug</option>
+        <option value="Task">Task</option>
+      </select>
+      <select id="filter-priority" class="select" aria-label="Filtr priorytetu">
+        <option value="ALL">Priorytet: Wszystkie</option>
+        <option value="Wysoki">Wysoki</option>
+        <option value="Średni">Średni</option>
+        <option value="Niski">Niski</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="stats-bar" id="stats-bar"></section>
+
+  <main id="app-content" class="app-content"></main>
+
+  <!-- Modal dodawania / edycji zadania -->
+  <div id="task-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Edytuj zadanie</h2>
+        <button id="modal-close" class="btn btn-ghost icon-only" aria-label="Zamknij">✕</button>
+      </div>
+      <form id="task-form" class="modal-body">
+        <input type="hidden" id="field-id" />
+        <label class="field">
+          <span>Tytuł *</span>
+          <input type="text" id="field-title" class="input" required placeholder="Nazwa zadania..." />
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Status</span>
+            <select id="field-status" class="select">
+              <option value="Todo">Do zrobienia</option>
+              <option value="In Progress">W trakcie</option>
+              <option value="Paused">Wstrzymane</option>
+              <option value="Done">Gotowe</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Priorytet</span>
+            <select id="field-priority" class="select">
+              <option value="Wysoki">Wysoki</option>
+              <option value="Średni">Średni</option>
+              <option value="Niski">Niski</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Typ</span>
+            <select id="field-type" class="select">
+              <option value="Task">Task</option>
+              <option value="Feature">Feature</option>
+              <option value="Bug">Bug</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Data startu</span>
+            <input type="date" id="field-start" class="input" />
+          </label>
+          <label class="field">
+            <span>Data końca</span>
+            <input type="date" id="field-end" class="input" />
+          </label>
+          <label class="field">
+            <span>Przypisany</span>
+            <input type="text" id="field-assignee" class="input" placeholder="teraj-stack" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Etykiety (oddzielone przecinkiem)</span>
+          <input type="text" id="field-labels" class="input" placeholder="np. enhancement, docs" />
+        </label>
+
+        <label class="field">
+          <span>Opis</span>
+          <textarea id="field-body" class="input textarea" rows="5" placeholder="Szczegóły zadania..."></textarea>
+        </label>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-delete-task" class="btn btn-danger">Usuń zadanie</button>
+          <div class="modal-footer-right">
+            <a id="field-github-link" href="#" target="_blank" rel="noopener" class="btn btn-ghost hidden">Otwórz na GitHub ↗</a>
+            <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Anuluj</button>
+            <button type="submit" class="btn btn-primary">Zapisz</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="data.js?v=bmclinic-mobile"></script>
+  <script src="app.js?v=bmclinic-mobile"></script>
+</body>
+</html>
