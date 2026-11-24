@@ -1817,16 +1817,20 @@
         const s = Date.parse(t.startDate);
         const e = Math.max(Date.parse(t.endDate), s + 86400000 * 0.5);
         const left = ((s - minMs) / span) * 100;
-        const width = Math.max(((e - s) / span) * 100, 4);
+        const width = Math.max(((e - s) / span) * 100, 12);
         const bg = colColor[t.status] || "#3b82f6";
+        const estMin = getTaskEstMinutes(t);
+        const isDone = t.status === "Done";
+        const sparkleCls = isDone ? "is-done-bar" : "is-sparkle-bar";
         return `
           <div class="roadmap-row">
             <div class="roadmap-label" data-open="${t.id}" title="${escapeHtml(t.title)}">
               <strong>#${t.id}</strong> ${escapeHtml(t.title)}
+              <span class="est-time-pill ${isDone ? "is-done" : ""}" style="margin-left:6px">${isDone ? "✓" : "⏱"} ${estMin} min</span>
             </div>
             <div class="roadmap-track">
-              <div class="roadmap-bar" data-open="${t.id}" style="left:${left.toFixed(2)}%;width:${Math.min(width, 100 - left).toFixed(2)}%;background:${bg}">
-                ${escapeHtml(t.startDate.slice(5))} → ${escapeHtml(t.endDate.slice(5))}
+              <div class="roadmap-bar ${sparkleCls}" data-open="${t.id}" style="left:${left.toFixed(2)}%;width:${Math.min(width, 100 - left).toFixed(2)}%;background:${bg}">
+                <span>${isDone ? "✓ Gotowe" : "✨ W toku"} · ${estMin} min (${escapeHtml(t.startDate.slice(5))})</span>
               </div>
             </div>
           </div>
