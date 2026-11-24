@@ -839,5 +839,21 @@
     "startDate": "2026-11-25",
     "endDate": "2026-11-25",
     "id": 55
+  },
+  {
+    "title": "🎨 Biblioteka przycisków i stylów mobilnych (Design Studio)",
+    "body": "Podgląd 10 motywów, 4 stylów przycisków ergonomicznych i 4 układów mobilnych z podglądem telefonu na żywo.",
+    "status": "Done",
+    "priority": "Średni",
+    "type": "Feature",
+    "assignee": "Wspólne",
+    "labels": [
+      "Mobile-First",
+      "Dziś · 2026-11-24"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "url": "http://localhost:3006/design-studio",
+    "id": 56
   }
 ]
