@@ -809,5 +809,20 @@
     "endDate": "2026-11-24",
     "url": "http://localhost:3006/uslugi/proktologia",
     "id": 53
+  },
+  {
+    "title": "📱 Kontakt z obsługą Apple Support — odblokowanie telefonu",
+    "body": "Zadzwonić lub napisać do wsparcia Apple (Apple Support) w celu odblokowania telefonu.",
+    "status": "Todo",
+    "priority": "Krytyczny",
+    "type": "Task",
+    "assignee": "Wspólne",
+    "labels": [
+      "Dziś · 2026-11-24",
+      "Pilne techniczne"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "id": 54
   }
 ]

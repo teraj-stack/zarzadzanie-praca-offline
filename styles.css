@@ -1403,3 +1403,65 @@ tr:hover td {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ===== TaskKill Studio — Duża, wyraźna typografia na tablicy Kanban i w ustawieniach ===== */
+.column-header,
+.column-header h3,
+.col-title {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em;
+}
+
+.task-card {
+  padding: 16px 16px 16px 20px !important;
+}
+
+.task-card .card-title,
+.task-card .task-title,
+.task-card h4 {
+  font-size: 19px !important;
+  line-height: 1.35 !important;
+  font-weight: 750 !important;
+  color: #f8fafc !important;
+  margin-bottom: 8px !important;
+}
+
+.task-card .card-body,
+.task-card .task-desc,
+.task-card p {
+  font-size: 15px !important;
+  line-height: 1.45 !important;
+}
+
+.task-card .badge,
+.task-card .pill,
+.task-card .card-meta,
+.task-card .card-id,
+.task-card .urgency-btn {
+  font-size: 14px !important;
+  padding: 4px 10px !important;
+}
+
+.task-card .quick-act-btn {
+  min-width: 34px !important;
+  min-height: 34px !important;
+  font-size: 16px !important;
+}
+
+/* Większe litery w oknie ustawień/edycji zadania */
+.modal .field > span {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+.modal .input,
+.modal .select,
+.modal .textarea {
+  font-size: 16px !important;
+  padding: 10px 12px !important;
+}
+
+.modal-header h2 {
+  font-size: 20px !important;
+}
