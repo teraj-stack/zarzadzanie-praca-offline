@@ -751,8 +751,8 @@
   },
   {
     "title": "⚖️ Wizyta u notariusza (sprawa przepisywania majątku — wyjazd za 1h z byłą żoną)",
-    "body": "Dzisiejsze spotkanie u notariusza. Janek niedostępny przy komputerze w trakcie spotkania.",
-    "status": "In Progress",
+    "body": "",
+    "status": "Done",
     "priority": "Krytyczny",
     "type": "Task",
     "assignee": "Janek",
