@@ -252,11 +252,11 @@
         z-index: 30;
         transform-origin: right center;
         will-change: transform;
-        /* Eye-accommodation curve: fast initial lift, ~80% long gentle deceleration */
+        /* Eye-accommodation curve: fast initial lift, ~82% ultra-gentle deceleration */
         transition:
-          transform 0.58s cubic-bezier(0.08, 0.94, 0.16, 1),
-          box-shadow 0.58s cubic-bezier(0.08, 0.94, 0.16, 1),
-          border-radius 0.4s ease;
+          transform 0.9s cubic-bezier(0.05, 0.96, 0.12, 1),
+          box-shadow 0.9s cubic-bezier(0.05, 0.96, 0.12, 1),
+          border-radius 0.45s ease;
       }
       .mm-preview-frame-wrap:hover {
         transform: translate3d(-135px, -12px, 0) scale(1.34);
@@ -530,6 +530,35 @@
       .mindmap-edges path.mindmap-edge-depth-3 {
         stroke-width: 3.2px !important;
       }
+      /* Milenka = miękkie poduszeczki | Janek = precyzyjny kryształ */
+      .mn-node-task.owner-milenka {
+        border-radius: 22px !important;
+      }
+      .mn-node-task.owner-janek {
+        border-radius: 4px !important;
+        border: 1.5px solid rgba(212, 175, 106, 0.58) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.28),
+          inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+          0 8px 20px rgba(0, 0, 0, 0.62) !important;
+      }
+      .mn-flow-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 7px;
+        border-radius: 6px;
+        border: 1px solid rgba(251, 191, 36, 0.5);
+        background: rgba(251, 191, 36, 0.14);
+        color: #fde68a;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .mn-flow-btn:hover {
+        background: rgba(251, 191, 36, 0.32);
+      }
       @keyframes mindmap-firefly-flow {
         0% {
           stroke-dashoffset: 100;
@@ -537,6 +566,25 @@
         100% {
           stroke-dashoffset: 0;
         }
+      }
+      @keyframes mindmap-firefly-flow-rev {
+        0% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: 100;
+        }
+      }
+      .mindmap-edges path.mindmap-firefly-rev {
+        fill: none;
+        vector-effect: non-scaling-stroke;
+        stroke: #38bdf8;
+        stroke-width: 6px !important;
+        stroke-linecap: round;
+        stroke-dasharray: 12 88;
+        opacity: 0.95 !important;
+        animation: mindmap-firefly-flow-rev 2.9s linear infinite;
+        pointer-events: none;
       }
       .mindmap-edges path.mindmap-firefly {
         fill: none;
@@ -1055,6 +1103,82 @@
   let boardZoom = Number(localStorage.getItem("managing_work_board_zoom_v1") || "0.85");
   if (!Number.isFinite(boardZoom) || boardZoom < 0.45 || boardZoom > 1.2) boardZoom = 0.85;
   let boardSymbolMode = localStorage.getItem("managing_work_board_symbols_v1") !== "0";
+  let boardOnlyToday = localStorage.getItem("managing_work_board_today_v1") === "1";
+  const TODAY_PLAN_LABEL = "Dziś · 2026-11-24";
+  let lastProgressAt = Number(localStorage.getItem("managing_work_last_progress_v1") || String(Date.now()));
+
+  function recordProgressAndReward(task, isDoneAction) {
+    lastProgressAt = Date.now();
+    localStorage.setItem("managing_work_last_progress_v1", String(lastProgressAt));
+    if (!isDoneAction) return;
+    const pts = task.priority === "Krytyczny" ? 50 : task.priority === "Wysoki" ? 25 : 10;
+    const prev = Number(localStorage.getItem("managing_work_points_v1") || "0");
+    const next = prev + pts;
+    localStorage.setItem("managing_work_points_v1", String(next));
+    const cheers = [
+      `🏆 +${pts} pkt! Krok bliżej celu — świetna robota!`,
+      `✨ +${pts} pkt! Jedno mniej, idziecie w górę!`,
+      `🔥 +${pts} pkt! Tempo rośnie — tak trzymać!`,
+      `💛 +${pts} pkt! Zrobione! Każde odhaczenie daje oddech.`,
+    ];
+    showToast(cheers[Math.floor(Math.random() * cheers.length)]);
+  }
+
+  function buildGoalPathWidget(allList, activeList) {
+    const scope = boardOnlyToday ? activeList : allList;
+    const total = Math.max(1, scope.length);
+    const done = scope.filter((t) => t.status === "Done").length;
+    const inProg = scope.filter((t) => t.status === "In Progress").length;
+    const pct = Math.min(100, Math.round(((done + inProg * 0.35) / total) * 100));
+    const exactPct = Math.round((done / total) * 100);
+    const points = Number(localStorage.getItem("managing_work_points_v1") || "0") + done * 10;
+    const minsIdle = Math.floor((Date.now() - lastProgressAt) / 60000);
+    const isStale = minsIdle >= 30;
+    const level =
+      points >= 300 ? "👑 Mistrz Dnia" : points >= 150 ? "🚀 Rozpęd" : points >= 60 ? "⚡ W rytmie" : "🌱 Start";
+
+    // Curve point along quadratic Bezier M 16 68 Q 165 62 324 14
+    const t = Math.max(0.03, Math.min(0.98, pct / 100));
+    const cx = Math.round((1 - t) * (1 - t) * 16 + 2 * (1 - t) * t * 165 + t * t * 324);
+    const cy = Math.round((1 - t) * (1 - t) * 68 + 2 * (1 - t) * t * 62 + t * t * 14);
+
+    return `
+      <div class="bm-goal-strip">
+        <div class="bm-goal-info">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="bm-goal-badge">${boardOnlyToday ? "🚨 PLAN AWARYJNY · 2026-11-24" : "📈 DROGA DO CELU"}</span>
+            <span class="bm-reward-pill" title="System nagród za ukończone zadania">${level} · ${points} pkt</span>
+            <span class="bm-idle-pill ${isStale ? "is-stale" : ""}" title="Czas od ostatniego postępu">
+              ${isStale ? `⏰ ${minsIdle} min bez postępu — czas na 1 mały krok!` : `⏱️ Ostatni postęp: ${minsIdle} min temu`}
+            </span>
+          </div>
+          <div style="font-size:12px;opacity:.85;margin-top:4px">
+            Ukończone: <strong>${done}/${scope.length}</strong> (${exactPct}%) · W trakcie: <strong>${inProg}</strong> · Z każdym ✓ wykres pnie się do celu.
+          </div>
+        </div>
+        <svg class="bm-goal-svg" viewBox="0 0 340 82" aria-label="Wykres drogi do celu">
+          <defs>
+            <linearGradient id="bmGoalLine" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8" />
+              <stop offset="55%" stop-color="#fbbf24" />
+              <stop offset="100%" stop-color="#22c55e" />
+            </linearGradient>
+            <linearGradient id="bmGoalFill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="rgba(34,197,94,0.28)" />
+              <stop offset="100%" stop-color="rgba(34,197,94,0.0)" />
+            </linearGradient>
+          </defs>
+          <path d="M 16 68 Q 165 62 324 14 L 324 76 L 16 76 Z" fill="url(#bmGoalFill)" />
+          <path d="M 16 68 Q 165 62 324 14" fill="none" stroke="rgba(148,163,184,0.28)" stroke-width="4" stroke-linecap="round" />
+          <path d="M 16 68 Q 165 62 324 14" fill="none" stroke="url(#bmGoalLine)" stroke-width="4.5" stroke-linecap="round" pathLength="100" stroke-dasharray="${Math.max(4, pct)} 100" />
+          <circle cx="324" cy="14" r="5.5" fill="#22c55e" />
+          <text x="318" y="30" text-anchor="end" fill="#86efac" font-size="9.5" font-weight="800">🎯 CEL</text>
+          <circle cx="${cx}" cy="${cy}" r="7" fill="#fbbf24" stroke="#0f172a" stroke-width="2.5" />
+          <text x="${Math.min(285, Math.max(36, cx))}" y="${Math.max(12, cy - 11)}" text-anchor="middle" fill="#fef08a" font-size="9.5" font-weight="800">TU (${pct}%)</text>
+        </svg>
+      </div>
+    `;
+  }
 
   function ensureBoardSignalsStyles() {
     if (document.getElementById("bm-board-signals-styles")) return;
@@ -1244,6 +1368,74 @@
         color: #4ade80;
         border: 1px solid rgba(34,197,94,.3);
       }
+      .bm-today-btn {
+        background: linear-gradient(135deg, rgba(245,158,11,.22), rgba(239,68,68,.22));
+        color: #fde68a;
+        border: 1.5px solid rgba(245,158,11,.65);
+        border-radius: 10px;
+        padding: 5px 11px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all .15s ease;
+      }
+      .bm-today-btn.active {
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        color: #fff;
+        border-color: #fde68a;
+        box-shadow: 0 4px 16px rgba(239,68,68,.35);
+      }
+      .bm-goal-strip {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 12px 16px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(15,23,42,.95), rgba(30,41,59,.88));
+        border: 1.5px solid rgba(245,158,11,.38);
+        color: #f8fafc;
+      }
+      .bm-goal-info { flex: 1 1 260px; }
+      .bm-goal-badge {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .05em;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: rgba(245,158,11,.2);
+        color: #fde68a;
+      }
+      .bm-reward-pill {
+        font-size: 11px;
+        font-weight: 800;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: rgba(34,197,94,.18);
+        color: #86efac;
+        border: 1px solid rgba(34,197,94,.4);
+      }
+      .bm-idle-pill {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: rgba(148,163,184,.14);
+        color: #cbd5e1;
+      }
+      .bm-idle-pill.is-stale {
+        background: rgba(239,68,68,.24);
+        color: #fecaca;
+        border: 1px solid rgba(239,68,68,.65);
+      }
+      .bm-goal-svg {
+        width: 320px;
+        max-width: 100%;
+        height: 76px;
+        flex-shrink: 0;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -1271,30 +1463,41 @@
   function renderBoard(list) {
     ensureBoardSignalsStyles();
 
+    const todayList = list.filter(
+      (t) => (Array.isArray(t.labels) && t.labels.includes(TODAY_PLAN_LABEL)) || t.startDate === "2026-11-24"
+    );
+    const activeList = boardOnlyToday ? todayList : list;
+
     const wrapper = document.createElement("div");
 
-    // Top control bar: Zoom + Symbol Mode + Visual Legend + Auto-Sync indicator
+    // Goal Progress Chart + Motivation Rewards Banner
+    const goalHost = document.createElement("div");
+    goalHost.innerHTML = buildGoalPathWidget(list, activeList);
+
+    // Top control bar: Plan Awaryjny Dziś + Zoom + Symbol Mode + Visual Legend + Auto-Sync
     const toolbar = document.createElement("div");
     toolbar.className = "bm-board-toolbar";
     toolbar.innerHTML = `
       <div class="bm-board-zoom-group">
-        <span style="font-weight:700;opacity:.85">🔍 Skala:</span>
+        <button type="button" class="bm-today-btn ${boardOnlyToday ? "active" : ""}" id="bm-toggle-today" title="Pokaż wyłącznie dzisiejszy Plan Awaryjny (2026-11-24)">
+          🚨 Plan Awaryjny · Dziś 2026-11-24 (${todayList.length})
+        </button>
+        <span style="font-weight:700;opacity:.85;margin-left:4px">🔍</span>
         <button type="button" class="bm-zoom-btn" id="bm-zoom-out" title="Oddal">−</button>
-        <input type="range" id="bm-zoom-slider" min="45" max="115" step="5" value="${Math.round(boardZoom * 100)}" style="width:92px;accent-color:#3b82f6" />
+        <input type="range" id="bm-zoom-slider" min="45" max="115" step="5" value="${Math.round(boardZoom * 100)}" style="width:82px;accent-color:#3b82f6" />
         <button type="button" class="bm-zoom-btn" id="bm-zoom-in" title="Przybliż">+</button>
-        <span id="bm-zoom-label" style="min-width:38px;font-weight:700;text-align:center">${Math.round(boardZoom * 100)}%</span>
-        <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 55 ? "active" : ""}" data-zoom-preset="0.55" title="Widok całej tablicy z oddalenia">Lot ptaka (55%)</button>
-        <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 80 ? "active" : ""}" data-zoom-preset="0.80">75–80%</button>
+        <span id="bm-zoom-label" style="min-width:36px;font-weight:700;text-align:center">${Math.round(boardZoom * 100)}%</span>
+        <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 55 ? "active" : ""}" data-zoom-preset="0.55" title="Widok całej tablicy z oddalenia">Lot ptaka</button>
         <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 100 ? "active" : ""}" data-zoom-preset="1.00">100%</button>
         <button type="button" class="bm-zoom-btn ${boardSymbolMode ? "active" : ""}" id="bm-toggle-symbols" title="Mniej tekstu, wyraźniejsze symbole statusu i pilności">
-          ${boardSymbolMode ? "🎯 Tryb symboli: WŁ" : "📝 Tryb pełny"}
+          ${boardSymbolMode ? "🎯 Symbole: WŁ" : "📝 Pełny"}
         </button>
       </div>
       <div class="bm-board-legend">
         <span title="Przyspieszony">⚠️ Pilne</span>
         <span title="Natychmiast">❗ JUŻ</span>
-        <span title="Kliknij w prawym dolnym rogu, aby uruchomić">▶ W trakcie</span>
-        <span title="Zrobione">✓ Gotowe</span>
+        <span title="Kliknij w prawym dolnym rogu, aby uruchomić">▶ Start</span>
+        <span title="Zrobione (+punkty)">✓ Gotowe</span>
         <span class="bm-sync-pill" title="Automatyczna synchronizacja co 4 sekundy">● Auto-sync</span>
       </div>
     `;
@@ -1326,7 +1529,7 @@
     };
 
     COLUMNS.forEach((col) => {
-      const colTasks = list.filter((t) => t.status === col.key);
+      const colTasks = activeList.filter((t) => t.status === col.key);
       const colEl = document.createElement("div");
       colEl.className = "column";
       colEl.dataset.status = col.key;
@@ -1431,7 +1634,11 @@
           t.status = t.status === "Done" ? "In Progress" : "Done";
           saveTasks();
           render();
-          showToast(t.status === "Done" ? `✅ #${t.id} zrobione!` : `▶ #${t.id} przywrócone do W trakcie`);
+          if (t.status === "Done") {
+            recordProgressAndReward(t, true);
+          } else {
+            showToast(`▶ #${t.id} przywrócone do W trakcie`);
+          }
         });
 
         card.querySelector('[data-action="pause"]').addEventListener("click", (ev) => {
@@ -1450,10 +1657,17 @@
 
     scaled.appendChild(board);
     stage.appendChild(scaled);
+    wrapper.appendChild(goalHost);
     wrapper.appendChild(toolbar);
     wrapper.appendChild(stage);
 
     applyBoardZoom(boardZoom);
+
+    toolbar.querySelector("#bm-toggle-today").addEventListener("click", () => {
+      boardOnlyToday = !boardOnlyToday;
+      localStorage.setItem("managing_work_board_today_v1", boardOnlyToday ? "1" : "0");
+      render();
+    });
 
     toolbar.querySelector("#bm-zoom-out").addEventListener("click", () => applyBoardZoom(boardZoom - 0.1));
     toolbar.querySelector("#bm-zoom-in").addEventListener("click", () => applyBoardZoom(boardZoom + 0.1));
@@ -2223,9 +2437,21 @@
       ev.target.value = "";
     });
 
-    // Draw organic MindNode Bézier curves + glowing directional fireflies
+    // Draw organic MindNode Bézier curves + directional arrowheads + glowing fireflies
     const svgNS = "http://www.w3.org/2000/svg";
+    const defs = document.createElementNS(svgNS, "defs");
+    defs.innerHTML = `
+      <marker id="bm-arrow-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+        <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#fbbf24" />
+      </marker>
+      <marker id="bm-arrow-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+        <path d="M 10 1.2 L 1 5 L 10 8.8 z" fill="#38bdf8" />
+      </marker>
+    `;
+    svgEl.appendChild(defs);
+
     layout.edges.forEach((e, idx) => {
+      const flowDir = e.to?.task?.flowDir || "out"; // out (→) | in (←) | both (⇄)
       const dStr = getEdgePathD(e);
       const path = document.createElementNS(svgNS, "path");
       path.setAttribute("d", dStr);
@@ -2234,18 +2460,32 @@
       path.setAttribute("stroke", e.color);
       path.setAttribute("stroke-width", e.depth === 1 ? "5.5" : e.depth === 2 ? "3.8" : "3.2");
       path.setAttribute("stroke-opacity", "0.94");
+      if (flowDir === "out" || flowDir === "both") path.setAttribute("marker-end", "url(#bm-arrow-end)");
+      if (flowDir === "in" || flowDir === "both") path.setAttribute("marker-start", "url(#bm-arrow-start)");
       e._pathEl = path;
       svgEl.appendChild(path);
 
-      // Animated firefly showing flow direction (root -> module -> task)
-      const firefly = document.createElementNS(svgNS, "path");
-      firefly.setAttribute("d", dStr);
-      firefly.setAttribute("pathLength", "100");
-      firefly.setAttribute("class", "mindmap-firefly");
-      firefly.style.animationDelay = `${-((idx * 0.33) % 2.8).toFixed(2)}s`;
-      firefly.style.animationDuration = e.depth === 1 ? "2.4s" : "3.1s";
-      e._fireflyEl = firefly;
-      svgEl.appendChild(firefly);
+      // Animated firefly showing patient/task flow direction
+      if (flowDir === "out" || flowDir === "both") {
+        const firefly = document.createElementNS(svgNS, "path");
+        firefly.setAttribute("d", dStr);
+        firefly.setAttribute("pathLength", "100");
+        firefly.setAttribute("class", "mindmap-firefly");
+        firefly.style.animationDelay = `${-((idx * 0.33) % 2.8).toFixed(2)}s`;
+        firefly.style.animationDuration = e.depth === 1 ? "2.4s" : "3.1s";
+        e._fireflyEl = firefly;
+        svgEl.appendChild(firefly);
+      }
+      if (flowDir === "in" || flowDir === "both") {
+        const fireflyRev = document.createElementNS(svgNS, "path");
+        fireflyRev.setAttribute("d", dStr);
+        fireflyRev.setAttribute("pathLength", "100");
+        fireflyRev.setAttribute("class", "mindmap-firefly-rev");
+        fireflyRev.style.animationDelay = `${-((idx * 0.41) % 2.9).toFixed(2)}s`;
+        fireflyRev.style.animationDuration = "2.9s";
+        if (!e._fireflyEl) e._fireflyEl = fireflyRev;
+        svgEl.appendChild(fireflyRev);
+      }
     });
 
     // Helper: collect node + visible descendants for subtree dragging
@@ -2412,9 +2652,12 @@
             : ownerKey === "janek"
             ? `<button type="button" class="mn-comic-owner mn-comic-janek" title="Kliknij, aby przełączyć: Milenka / Janek / Wspólne">⚡ JANEK</button>`
             : `<button type="button" class="mn-comic-owner mn-comic-both" title="Kliknij, aby przełączyć: Milenka / Janek / Wspólne">💥 WSPÓLNE</button>`;
+        const flowDir = t.flowDir || "out";
+        const flowSymbol = flowDir === "in" ? "← Powrót" : flowDir === "both" ? "⇄ Obie" : "→ Wejście";
+        const flowBtnHtml = `<button type="button" class="mn-flow-btn" title="Kierunek przepływu pacjenta — kliknij, aby przełączyć: → Wejście / ← Powrót / ⇄ Dwukierunkowy">${flowSymbol}</button>`;
         const hasSocialCampaign = Array.isArray(t.labels) && t.labels.includes("Kampania FB / Social");
-        const socialBtnHtml = `<button type="button" class="mn-social-tag ${hasSocialCampaign ? "is-active" : ""}" title="Oznacz / odznacz: wymaga kampanii Facebook / Social Media">${hasSocialCampaign ? "📣 FB / SOCIAL" : "+📣 FB"}</button>`;
-        el.className = `mn-node mn-node-task ${n.dir < 0 ? "dir-left" : ""} ${isDone ? "is-done" : ""} ${isPreviewActive ? "is-preview-active" : ""}`;
+        const socialBtnHtml = `<button type="button" class="mn-social-tag ${hasSocialCampaign ? "is-active" : ""}" title="Oznacz / odznacz: wymaga kampanii Facebook / Social Media">${hasSocialCampaign ? "📣 FB / SOCIAL" : "+📣 FB"}</button>${flowBtnHtml}`;
+        el.className = `mn-node mn-node-task owner-${ownerKey} ${n.dir < 0 ? "dir-left" : ""} ${isDone ? "is-done" : ""} ${isPreviewActive ? "is-preview-active" : ""}`;
         el.innerHTML = `
           <div class="mn-node-media-wrap">
             ${imageHtml}
@@ -2470,6 +2713,23 @@
               else target.assignee = "Milenka";
               saveTasks();
               render();
+            }
+          });
+        }
+
+        const flowBtnEl = el.querySelector(".mn-flow-btn");
+        if (flowBtnEl) {
+          flowBtnEl.addEventListener("mousedown", (ev) => ev.stopPropagation());
+          flowBtnEl.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            const target = tasks.find((x) => x.id === t.id);
+            if (target) {
+              const cur = target.flowDir || "out";
+              target.flowDir = cur === "out" ? "in" : cur === "in" ? "both" : "out";
+              saveTasks();
+              render();
+              const label = target.flowDir === "in" ? "← Powrót" : target.flowDir === "both" ? "⇄ Dwukierunkowy" : "→ Wejście";
+              showToast(`#${t.id} przepływ: ${label}`);
             }
           });
         }

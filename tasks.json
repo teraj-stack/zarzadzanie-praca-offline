@@ -733,5 +733,81 @@
     "assignee": "teraj-stack",
     "labels": [],
     "body": ""
+  },
+  {
+    "title": "🏡 Sprawy podstawowe: apteka (leki), zakupy (jedzenie), spokojna opieka nad dziećmi",
+    "body": "PRIORYTET #1 — bezpieczeństwo, zdrowie, leki, jedzenie i obecność przy dzieciach. Wszystko inne jest wtórne.",
+    "status": "In Progress",
+    "priority": "Krytyczny",
+    "type": "Task",
+    "assignee": "Milenka",
+    "labels": [
+      "Dziś · 2026-11-24",
+      "Bezpieczeństwo"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "id": 49
+  },
+  {
+    "title": "⚖️ Wizyta u notariusza (sprawa przepisywania majątku — wyjazd za 1h z byłą żoną)",
+    "body": "Dzisiejsze spotkanie u notariusza. Janek niedostępny przy komputerze w trakcie spotkania.",
+    "status": "In Progress",
+    "priority": "Krytyczny",
+    "type": "Task",
+    "assignee": "Janek",
+    "labels": [
+      "Dziś · 2026-11-24",
+      "Pilne prawne"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "id": 50
+  },
+  {
+    "title": "🏛️ Kontakt z prawnikiem z Urzędu Miasta (zabezpieczenie bytu i kont bankowych)",
+    "body": "Pilny kontakt z bezpłatną pomocą prawną Urzędu Miasta ws. zabezpieczenia środków na życie na kontach bankowych.",
+    "status": "Todo",
+    "priority": "Krytyczny",
+    "type": "Task",
+    "assignee": "Wspólne",
+    "labels": [
+      "Dziś · 2026-11-24",
+      "Pilne prawne"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "id": 51
+  },
+  {
+    "title": "🏥 Spotkanie z właścicielami klinik — ustalenie adresów i godzin przyjęć (BLOKER KAMPANII)",
+    "body": "NIEZBĘDNE: bez potwierdzonych adresów i godzin przyjęć nie możemy wpisać lokalizacji na strony ani ruszyć z kampanią na pacjentów.",
+    "status": "Todo",
+    "priority": "Krytyczny",
+    "type": "Task",
+    "assignee": "Janek",
+    "labels": [
+      "Dziś · 2026-11-24",
+      "Bloker kampanii"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "id": 52
+  },
+  {
+    "title": "🚀 Dokończenie strony Proktologii i zrębu kliniki (główne zadanie z wczoraj/nocy)",
+    "body": "Główne zadanie produktowe na dziś: dopięcie strony Proktologii (po potwierdzeniu adresów/godzin), podłączenie wysyłki maili z formularza i gotowość do startu zapisów.",
+    "status": "In Progress",
+    "priority": "Wysoki",
+    "type": "Feature",
+    "assignee": "Wspólne",
+    "labels": [
+      "Dziś · 2026-11-24",
+      "Proktologia MVP"
+    ],
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-24",
+    "url": "http://localhost:3006/uslugi/proktologia",
+    "id": 53
   }
 ]
