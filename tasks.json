@@ -3,11 +3,12 @@
     "id": 1,
     "title": "✨ Strona Główna (Sky Lobby — frontend Milenki)",
     "body": "Frontend Milenki (bmclinic-home.html): Sky Lobby, 188 grafik, specjalizacje, mapa kliniki, sklep, zgody DOCX.",
-    "status": "Todo",
+    "status": "Done",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
-      "Strona Główna"
+      "Strona Główna",
+      "Kampania FB / Social"
     ],
     "assignee": "BM Clinic",
     "startDate": "2026-11-23",
@@ -274,7 +275,7 @@
     "id": 19,
     "title": "🩹 Panel przebiegu gojenia ran (DO WYKONANIA)",
     "body": "Dziennik gojenia, objawy alarmowe i zdjęcia kontrolne do wpięcia w /pacjent.",
-    "status": "Todo",
+    "status": "Paused",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -320,9 +321,9 @@
     "id": 22,
     "title": "📱 Aplikacja dla pacjentów (z Drive — DO WPIĘCIA)",
     "body": "Objawy, objawy alarmowe i rekonwalescencja — propozycja ścieżki /aplikacja-pacjenta.",
-    "status": "Todo",
+    "status": "Paused",
     "priority": "Wysoki",
-    "type": "Feature",
+    "type": "Task",
     "labels": [
       "Do wykonania"
     ],
@@ -335,7 +336,7 @@
     "id": 23,
     "title": "🩷 Empatyczna podstrona proktologiczna (z Drive — DO WPIĘCIA)",
     "body": "Dedykowana ścieżka edukacyjno-komfortowa dla pacjentów proktologicznych.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Średni",
     "type": "Feature",
     "labels": [
@@ -350,11 +351,11 @@
     "id": 24,
     "title": "🎨 Elementy z Aether Tactile / Render Studio (DO DECYZJI)",
     "body": "Wybór i przeniesienie wybranych przycisków/renderów do bmclinic.co.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Średni",
     "type": "Task",
     "labels": [
-      "Do wykonania"
+      "rozpoczete"
     ],
     "assignee": "BM Clinic",
     "startDate": "2026-11-23",
@@ -365,7 +366,7 @@
     "id": 25,
     "title": "🚀 Landing Page #1: Proktologia (FB / Social)",
     "body": "Dedykowany landing page dla dziedziny Proktologia + kampania Facebook / Social Media.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -381,7 +382,7 @@
     "id": 26,
     "title": "🚀 Landing Page #2: Żylaki i naczynka (FB / Social)",
     "body": "Dedykowany landing page dla dziedziny Żylaki i naczynka + kampania Facebook / Social Media.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -397,7 +398,7 @@
     "id": 27,
     "title": "🚀 Landing Page #3: Chirurgia ogólna (FB / Social)",
     "body": "Dedykowany landing page dla dziedziny Chirurgia ogólna + kampania Facebook / Social Media.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -413,7 +414,7 @@
     "id": 28,
     "title": "🚀 Landing Page #4: Medycyna estetyczna (Mobile-First)",
     "body": "Dedykowany landing page dla dziedziny Medycyna estetyczna + kampania Facebook / Social Media. Cel: konwersja Kampania → Wykonany zabieg.",
-    "status": "Todo",
+    "status": "Paused",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -429,7 +430,7 @@
     "id": 29,
     "title": "📊 Model Konwersji: Kampania → Wykonany Zabieg (4 bazy)",
     "body": "Główny KPI: konwersja od poziomu kampanii do wykonanych zabiegów (nie sama liczba wizyt). 4 odseparowane bazy danych (Proktologia, Flebologia, Chirurgia, Medycyna estetyczna) + śledzenie triggerów decyzji pacjenta.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -445,7 +446,7 @@
     "id": 30,
     "title": "📣 Kampania FB/Social: Proktologia (grafiki + triggery)",
     "body": "Kreacje FB/Social i triggery decyzyjne dla Proktologii — osobna baza konwersji Kampania → Zabieg.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -461,7 +462,7 @@
     "id": 31,
     "title": "📣 Kampania FB/Social: Flebologia / Żylaki (sezon + triggery)",
     "body": "Kreacje FB/Social na sezon żylakowy i triggery decyzyjne — osobna baza konwersji Kampania → Zabieg.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -477,7 +478,7 @@
     "id": 32,
     "title": "📣 Kampania FB/Social: Chirurgia ogólna (pilne + triggery)",
     "body": "Kreacje FB/Social pod pilne zabiegi chirurgiczne — osobna baza konwersji Kampania → Zabieg.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -493,7 +494,7 @@
     "id": 33,
     "title": "📣 Kampania FB/Social: Medycyna estetyczna (grafiki + triggery)",
     "body": "Kreacje FB/Social i osobne triggery dla Medycyny estetycznej — osobna baza konwersji Kampania → Zabieg.",
-    "status": "Todo",
+    "status": "Paused",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -509,7 +510,7 @@
     "id": 34,
     "title": "⚡ Akceleracja Gojenia (protokoły + harmonogram)",
     "body": "Pełny moduł akceleracji gojenia po zabiegach: protokoły, etapy regeneracji, zalecenia i szybkie publikowanie treści dla pacjentów (Mobile-First).",
-    "status": "Todo",
+    "status": "Paused",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -524,7 +525,7 @@
     "id": 35,
     "title": "🩹 Opieka Pozabiegowa & Komunikacja z Pacjentem",
     "body": "Dziennik gojenia, objawy alarmowe, zdjęcia kontrolne i ustandaryzowana aplikacja pacjenta (schemat z flebologii) — Mobile-First.",
-    "status": "Todo",
+    "status": "Paused",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -539,7 +540,7 @@
     "id": 36,
     "title": "📱 Rejestracja SMS (Auto-fill, 1 klik + pomiar porzuceń)",
     "body": "Najłatwiejsza możliwa rejestracja: kod SMS sam się wpisuje i potwierdza (WebOTP, minimum kliknięć). Tracking porzuceń w module pacjenta (ile osób dotarło do rejestracji i odpadło).",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -554,7 +555,7 @@
     "id": 37,
     "title": "💌 Automatyzacja maili wizerunkowych (Wizytówka Milenki)",
     "body": "Pełna automatyzacja maili do pacjenta — ładne, grzeczne, wyróżniające się szablony wizerunkowe. Zadanie priorytetowe dla Milenki.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -569,7 +570,7 @@
     "id": 38,
     "title": "🗓️ Synchronizacja kalendarzy (Strona ↔ EDM ↔ ZnanyLekarz)",
     "body": "Sparowane grafiki w 3 miejscach: kalendarz na stronie bmclinic.co, program do dokumentacji medycznej pacjentów oraz ZnanyLekarz.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -584,7 +585,7 @@
     "id": 39,
     "title": "🛒 Odrębna rejestracja do Sklepu (przez Panel Pacjenta)",
     "body": "Rozdzielona rejestracja na stronę vs rejestracja do sklepu. Przepływ: Landing Page → Panel Pacjenta → Sklep.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -599,7 +600,7 @@
     "id": 40,
     "title": "🩺 Sprzedaż konsultacji lekarskich (finał Landing Page)",
     "body": "Bezpośrednia sprzedaż konsultacji lekarskich przez sklep jako zakończenie ścieżki każdego z 4 landing page'y.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -630,7 +631,7 @@
   {
     "title": "📱 Ekran 1 Mobile 9:16: Sky Lobby (Hero startowy)",
     "body": "2 dedykowane grafiki 9:16 (złoty zachód + jasny dzień) z wolną górą pod nagłówek i CTA Umów wizytę.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -646,7 +647,7 @@
   {
     "title": "📱 Ekran 2 Mobile 9:16: 4 Strefy Specjalizacji",
     "body": "4 grafiki 9:16 (Proktologia, Flebologia, Chirurgia, Medycyna estetyczna) w spójnym jasnym klimacie bez napisów.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -678,7 +679,7 @@
   {
     "title": "📱 Ekran 4 Mobile 9:16: Przygotowanie, Zgody DOCX i Dziennik Gojenia",
     "body": "12 poradników przygotowania + dokumenty zgód + dziennik objawów/gojenia z 2 spokojnymi tłami 9:16.",
-    "status": "Todo",
+    "status": "In Progress",
     "priority": "Średni",
     "type": "Task",
     "labels": [
@@ -706,5 +707,31 @@
     "endDate": "2026-11-23",
     "url": "http://localhost:3007/",
     "id": 46
+  },
+  {
+    "id": 47,
+    "url": "",
+    "title": "cennik - proktologia",
+    "status": "In Progress",
+    "priority": "Wysoki",
+    "type": "Task",
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-27",
+    "assignee": "teraj-stack",
+    "labels": [],
+    "body": ""
+  },
+  {
+    "id": 48,
+    "url": "",
+    "title": "kampania  przez fb, zl,, google dla proktologii",
+    "status": "In Progress",
+    "priority": "Średni",
+    "type": "Task",
+    "startDate": "2026-11-24",
+    "endDate": "2026-11-27",
+    "assignee": "teraj-stack",
+    "labels": [],
+    "body": ""
   }
 ]

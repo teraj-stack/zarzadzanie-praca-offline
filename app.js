@@ -77,7 +77,7 @@
   let mindmapQuickAdd = null; // { targetLabel, defaults }
   let mindmapMedia = loadMindMapMedia(); // { [nodeId]: { emoji?, sticker?, image? } }
   let mindmapMediaEditor = null; // { nodeId, nodeLabel, tab: 'emoji'|'sticker'|'image' }
-  let mindmapBg = localStorage.getItem(MINDMAP_BG_KEY) || "photo"; // photo | ivory | sky | sage | custom | dark
+  let mindmapBg = localStorage.getItem("managing_work_mindmap_bg_v2") || "dark"; // dark | photo | ivory | sky | sage | custom
   let mindmapCustomBg = localStorage.getItem(MINDMAP_CUSTOM_BG_KEY) || "";
   let mindmapPreviewOpen = true;
   let mindmapPreviewXl = false;
@@ -103,7 +103,7 @@
       .mm-preview-dock {
         width: 480px;
         min-width: 440px;
-        max-width: 48vw;
+        max-width: 46vw;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -111,25 +111,21 @@
         padding: 12px;
         background: var(--surface, #13192e);
         border-left: 1px solid var(--border, #2e3d66);
-        overflow-y: auto;
-        z-index: 25;
-        transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
-      }
-      .mm-preview-dock:hover {
-        width: 640px;
-        max-width: 58vw;
-        box-shadow: -12px 0 36px rgba(0, 0, 0, 0.45);
+        overflow: visible;
+        position: relative;
+        z-index: 40;
       }
       .mm-preview-dock.is-xl {
-        width: 720px;
-        min-width: 600px;
-        max-width: 65vw;
-      }
-      .mm-preview-dock:hover .mm-preview-frame-wrap {
-        height: 440px;
+        width: 680px;
+        min-width: 580px;
+        max-width: 62vw;
       }
       .mm-preview-dock.hidden {
         display: none;
+      }
+      .mm-preview-card,
+      .mm-preview-dual {
+        overflow: visible !important;
       }
       .mm-preview-header {
         display: flex;
@@ -249,14 +245,30 @@
         position: relative;
         width: 100%;
         height: 332px;
-        border-radius: 10px;
+        border-radius: 12px;
         overflow: hidden;
         background: #0f172a;
         cursor: pointer;
-        transition: height 0.2s ease;
+        z-index: 30;
+        transform-origin: right center;
+        will-change: transform;
+        /* Eye-accommodation curve: fast initial lift, ~80% long gentle deceleration */
+        transition:
+          transform 0.58s cubic-bezier(0.08, 0.94, 0.16, 1),
+          box-shadow 0.58s cubic-bezier(0.08, 0.94, 0.16, 1),
+          border-radius 0.4s ease;
+      }
+      .mm-preview-frame-wrap:hover {
+        transform: translate3d(-135px, -12px, 0) scale(1.34);
+        z-index: 95;
+        border-radius: 14px;
+        box-shadow: -24px 28px 64px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(56, 189, 248, 0.65);
       }
       .mm-preview-dock.is-xl .mm-preview-frame-wrap {
         height: 470px;
+      }
+      .mm-preview-dock.is-xl .mm-preview-frame-wrap:hover {
+        transform: translate3d(-90px, -8px, 0) scale(1.16);
       }
       .mm-preview-frame-wrap iframe {
         position: absolute;
@@ -402,52 +414,81 @@
         border: none;
         background: #fff;
       }
-      /* Larger, high-contrast, highly readable MindNode tree */
+      /* Pure black tree canvas + puffy 3D cartoon tiles (lightweight CSS, zero CPU load) */
+      .mindmap-viewport.bg-dark {
+        background: #03050a !important;
+        background-image: radial-gradient(circle at 50% 45%, #0c1222 0%, #03050a 72%) !important;
+      }
       .mn-node-root {
-        padding: 14px 22px !important;
-        border-radius: 18px !important;
-        border-width: 2.5px !important;
-        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.45) !important;
+        padding: 20px 30px !important;
+        min-width: 245px !important;
+        border-radius: 26px !important;
+        border: 3px solid #020617 !important;
+        box-shadow:
+          inset 0 4px 0 rgba(255, 255, 255, 0.42),
+          inset 0 -7px 0 rgba(0, 0, 0, 0.36),
+          0 14px 28px rgba(0, 0, 0, 0.68) !important;
+        transition: transform 0.22s cubic-bezier(0.08, 0.94, 0.16, 1), box-shadow 0.22s ease !important;
+      }
+      .mn-node-root:active {
+        transform: translateY(3px) scale(0.98) !important;
       }
       .mn-node-root .mn-root-title,
       .mn-node-root .mn-title {
-        font-size: 21px !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.01em;
+        font-size: 24px !important;
+        font-weight: 900 !important;
+        letter-spacing: -0.015em;
+        text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
       }
       .mn-node-root .mn-root-sub,
       .mn-node-root .mn-subtitle {
-        font-size: 13px !important;
-        font-weight: 600 !important;
-        opacity: 0.92 !important;
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
+        opacity: 0.94 !important;
       }
       .mn-node-branch {
-        padding: 11px 18px !important;
-        border-radius: 14px !important;
-        border-width: 2px !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.32) !important;
+        padding: 15px 22px !important;
+        border-radius: 22px !important;
+        border: 2.5px solid #020617 !important;
+        font-size: 17.5px !important;
+        font-weight: 900 !important;
+        box-shadow:
+          inset 0 3.5px 0 rgba(255, 255, 255, 0.36),
+          inset 0 -5.5px 0 rgba(0, 0, 0, 0.34),
+          0 10px 22px rgba(0, 0, 0, 0.58) !important;
+        transition: transform 0.2s cubic-bezier(0.08, 0.94, 0.16, 1) !important;
+      }
+      .mn-node-branch:active {
+        transform: translateY(2px) scale(0.98) !important;
       }
       .mn-node-branch .mn-branch-title {
-        font-size: 16px !important;
-        font-weight: 800 !important;
+        font-size: 17.5px !important;
+        font-weight: 900 !important;
+        text-shadow: 0 1.5px 0 rgba(0, 0, 0, 0.3);
       }
       .mn-node-branch .mn-branch-count {
-        font-size: 13px !important;
+        font-size: 13.5px !important;
         font-weight: 800 !important;
-        padding: 2px 8px !important;
+        padding: 3px 9px !important;
+        border-radius: 999px !important;
       }
       .mn-node-task {
-        padding: 11px 14px !important;
-        border-radius: 14px !important;
-        border-width: 2px !important;
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28) !important;
+        padding: 13px 17px !important;
+        border-radius: 18px !important;
+        border: 2.5px solid #020617 !important;
+        box-shadow:
+          inset 0 3px 0 rgba(255, 255, 255, 0.24),
+          inset 0 -5px 0 rgba(0, 0, 0, 0.38),
+          0 9px 18px rgba(0, 0, 0, 0.52) !important;
+        transition: transform 0.18s cubic-bezier(0.08, 0.94, 0.16, 1) !important;
+      }
+      .mn-node-task:active {
+        transform: translateY(2px) scale(0.985) !important;
       }
       .mn-task-title {
-        font-size: 15.5px !important;
-        font-weight: 700 !important;
-        line-height: 1.3 !important;
+        font-size: 16.5px !important;
+        font-weight: 800 !important;
+        line-height: 1.32 !important;
         white-space: normal !important;
         display: -webkit-box !important;
         -webkit-line-clamp: 2 !important;
@@ -1011,9 +1052,278 @@
     `;
   }
 
+  let boardZoom = Number(localStorage.getItem("managing_work_board_zoom_v1") || "0.85");
+  if (!Number.isFinite(boardZoom) || boardZoom < 0.45 || boardZoom > 1.2) boardZoom = 0.85;
+  let boardSymbolMode = localStorage.getItem("managing_work_board_symbols_v1") !== "0";
+
+  function ensureBoardSignalsStyles() {
+    if (document.getElementById("bm-board-signals-styles")) return;
+    const style = document.createElement("style");
+    style.id = "bm-board-signals-styles";
+    style.textContent = `
+      .bm-board-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+      .bm-board-zoom-group, .bm-board-legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+      }
+      .bm-zoom-btn {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 4px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .15s ease;
+      }
+      .bm-zoom-btn:hover, .bm-zoom-btn.active {
+        background: var(--accent, #3b82f6);
+        color: #fff;
+        border-color: transparent;
+      }
+      .bm-board-stage {
+        overflow: auto;
+        border-radius: 14px;
+        padding-bottom: 16px;
+      }
+      .bm-board-scaled {
+        transform-origin: top left;
+        transition: transform .18s cubic-bezier(.22,1,.36,1);
+      }
+      .card.bm-sig-card {
+        position: relative;
+        padding: 10px 12px 34px 14px;
+        border-left: 4px solid #64748b;
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      }
+      .card.bm-sig-card[data-status="Todo"] { border-left-color: #64748b; }
+      .card.bm-sig-card[data-status="In Progress"] {
+        border-left-color: #22c55e;
+        box-shadow: 0 0 0 1px rgba(34,197,94,.28);
+      }
+      .card.bm-sig-card[data-status="Paused"] { border-left-color: #a855f7; }
+      .card.bm-sig-card[data-status="Done"] {
+        border-left-color: #10b981;
+        opacity: 0.72;
+      }
+      .card.bm-sig-card[data-status="Done"]:hover { opacity: 1; }
+      .card.bm-sig-card[data-prio="Krytyczny"] {
+        box-shadow: 0 0 0 1.5px rgba(239,68,68,.55), 0 4px 14px rgba(239,68,68,.14);
+      }
+      .card.bm-sig-card[data-prio="Wysoki"] {
+        box-shadow: 0 0 0 1px rgba(245,158,11,.42);
+      }
+      .bm-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 5px;
+      }
+      .bm-card-id {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .bm-prio-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 26px;
+        height: 24px;
+        padding: 0 6px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+        transition: transform .12s ease, background .15s ease;
+      }
+      .bm-prio-trigger:hover { transform: scale(1.12); }
+      .bm-prio-trigger.prio-crit {
+        background: rgba(239,68,68,.18);
+        border-color: rgba(239,68,68,.7);
+        color: #f87171;
+        font-weight: 800;
+        animation: bm-pulse-crit 1.6s infinite;
+      }
+      .bm-prio-trigger.prio-warn {
+        background: rgba(245,158,11,.18);
+        border-color: rgba(245,158,11,.65);
+        color: #fbbf24;
+      }
+      @keyframes bm-pulse-crit {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.45); }
+        50% { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+      }
+      .bm-card-title-compact {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.32;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .bm-card-actions-br {
+        position: absolute;
+        right: 8px;
+        bottom: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .bm-quick-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform .12s ease, background .15s ease, color .15s ease;
+      }
+      .bm-quick-btn:hover { transform: scale(1.12); }
+      .bm-quick-play {
+        color: #22c55e;
+        border-color: rgba(34,197,94,.45);
+        background: rgba(34,197,94,.12);
+      }
+      .bm-quick-play.active, .bm-quick-play:hover {
+        background: #22c55e;
+        color: #052e16;
+        border-color: #22c55e;
+      }
+      .bm-quick-done {
+        color: #10b981;
+        border-color: rgba(16,185,129,.4);
+      }
+      .bm-quick-done.active, .bm-quick-done:hover {
+        background: #10b981;
+        color: #fff;
+        border-color: #10b981;
+      }
+      .bm-quick-pause:hover, .bm-quick-pause.active {
+        background: #a855f7;
+        color: #fff;
+        border-color: #a855f7;
+      }
+      .bm-sync-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(34,197,94,.12);
+        color: #4ade80;
+        border: 1px solid rgba(34,197,94,.3);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function getPrioritySignal(prio) {
+    if (prio === "Krytyczny") {
+      return { icon: "❗", cls: "prio-crit", tip: "JUŻ (Krytyczny) — kliknij, aby zmienić pilność" };
+    }
+    if (prio === "Wysoki") {
+      return { icon: "⚠️", cls: "prio-warn", tip: "Przyspieszony (Wysoki) — kliknij, aby zmienić pilność" };
+    }
+    if (prio === "Niski") {
+      return { icon: "○", cls: "", tip: "Niski — kliknij, aby podbić pilność" };
+    }
+    return { icon: "●", cls: "", tip: "Standardowy — kliknij, aby ustawić ⚠️ Przyspieszony lub ❗ JUŻ" };
+  }
+
+  function cyclePriority(prio) {
+    if (prio === "Średni" || !prio) return "Wysoki";
+    if (prio === "Wysoki") return "Krytyczny";
+    if (prio === "Krytyczny") return "Niski";
+    return "Średni";
+  }
+
   function renderBoard(list) {
+    ensureBoardSignalsStyles();
+
+    const wrapper = document.createElement("div");
+
+    // Top control bar: Zoom + Symbol Mode + Visual Legend + Auto-Sync indicator
+    const toolbar = document.createElement("div");
+    toolbar.className = "bm-board-toolbar";
+    toolbar.innerHTML = `
+      <div class="bm-board-zoom-group">
+        <span style="font-weight:700;opacity:.85">🔍 Skala:</span>
+        <button type="button" class="bm-zoom-btn" id="bm-zoom-out" title="Oddal">−</button>
+        <input type="range" id="bm-zoom-slider" min="45" max="115" step="5" value="${Math.round(boardZoom * 100)}" style="width:92px;accent-color:#3b82f6" />
+        <button type="button" class="bm-zoom-btn" id="bm-zoom-in" title="Przybliż">+</button>
+        <span id="bm-zoom-label" style="min-width:38px;font-weight:700;text-align:center">${Math.round(boardZoom * 100)}%</span>
+        <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 55 ? "active" : ""}" data-zoom-preset="0.55" title="Widok całej tablicy z oddalenia">Lot ptaka (55%)</button>
+        <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 80 ? "active" : ""}" data-zoom-preset="0.80">75–80%</button>
+        <button type="button" class="bm-zoom-btn ${Math.round(boardZoom * 100) === 100 ? "active" : ""}" data-zoom-preset="1.00">100%</button>
+        <button type="button" class="bm-zoom-btn ${boardSymbolMode ? "active" : ""}" id="bm-toggle-symbols" title="Mniej tekstu, wyraźniejsze symbole statusu i pilności">
+          ${boardSymbolMode ? "🎯 Tryb symboli: WŁ" : "📝 Tryb pełny"}
+        </button>
+      </div>
+      <div class="bm-board-legend">
+        <span title="Przyspieszony">⚠️ Pilne</span>
+        <span title="Natychmiast">❗ JUŻ</span>
+        <span title="Kliknij w prawym dolnym rogu, aby uruchomić">▶ W trakcie</span>
+        <span title="Zrobione">✓ Gotowe</span>
+        <span class="bm-sync-pill" title="Automatyczna synchronizacja co 4 sekundy">● Auto-sync</span>
+      </div>
+    `;
+
+    const stage = document.createElement("div");
+    stage.className = "bm-board-stage";
+
+    const scaled = document.createElement("div");
+    scaled.className = "bm-board-scaled";
+    const applyBoardZoom = (z) => {
+      boardZoom = Math.min(1.15, Math.max(0.45, Number(z)));
+      localStorage.setItem("managing_work_board_zoom_v1", String(boardZoom));
+      scaled.style.transform = `scale(${boardZoom})`;
+      scaled.style.width = `${100 / boardZoom}%`;
+      const lbl = toolbar.querySelector("#bm-zoom-label");
+      const sl = toolbar.querySelector("#bm-zoom-slider");
+      if (lbl) lbl.textContent = `${Math.round(boardZoom * 100)}%`;
+      if (sl) sl.value = String(Math.round(boardZoom * 100));
+    };
+
     const board = document.createElement("div");
     board.className = "board";
+
+    const COL_ICONS = {
+      Todo: "📋",
+      "In Progress": "▶",
+      Paused: "⏸",
+      Done: "✅",
+    };
 
     COLUMNS.forEach((col) => {
       const colTasks = list.filter((t) => t.status === col.key);
@@ -1044,15 +1354,18 @@
         <div class="column-header">
           <span class="column-title">
             <span class="status-dot ${col.css}"></span>
-            ${col.label}
+            <span>${COL_ICONS[col.key] || ""} ${col.label}</span>
           </span>
           <span class="count-badge">${colTasks.length}</span>
         </div>
       `;
 
       colTasks.forEach((t) => {
+        const sig = getPrioritySignal(t.priority);
         const card = document.createElement("article");
-        card.className = "card";
+        card.className = "card bm-sig-card";
+        card.dataset.status = t.status;
+        card.dataset.prio = t.priority || "Średni";
         card.draggable = true;
         card.addEventListener("dragstart", () => {
           draggedId = t.id;
@@ -1061,27 +1374,116 @@
         card.addEventListener("dragend", () => card.classList.remove("dragging"));
         card.addEventListener("click", () => openModal(t.id));
 
+        const labelsHtml = boardSymbolMode
+          ? ""
+          : `<div class="card-meta" style="margin-top:6px">
+              <span class="badge type-${escapeHtml(t.type)}">${escapeHtml(t.type)}</span>
+              ${(t.labels || []).slice(0, 2).map((l) => `<span class="badge" style="background:var(--surface-2);color:var(--muted)">${escapeHtml(l)}</span>`).join("")}
+            </div>`;
+
         card.innerHTML = `
-          <div class="card-top">
-            <span>#${t.id}</span>
-            <span>${escapeHtml(t.assignee || "")}</span>
+          <div class="bm-card-head">
+            <span class="bm-card-id">
+              <span>#${t.id}</span>
+              ${t.assignee ? `<span style="opacity:.75">· ${escapeHtml(t.assignee.split(" ")[0])}</span>` : ""}
+            </span>
+            <button type="button" class="bm-prio-trigger ${sig.cls}" data-action="prio" title="${sig.tip}">
+              ${sig.icon}
+            </button>
           </div>
-          <div class="card-title">${escapeHtml(t.title)}</div>
-          <div class="card-meta">
-            <span class="badge prio-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span>
-            <span class="badge type-${escapeHtml(t.type)}">${escapeHtml(t.type)}</span>
-            ${(t.labels || []).map((l) => `<span class="badge" style="background:var(--surface-2);color:var(--muted)">${escapeHtml(l)}</span>`).join("")}
+          <div class="bm-card-title-compact" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+          ${labelsHtml}
+          <div class="bm-card-actions-br">
+            ${t.url ? `<button type="button" class="bm-quick-btn" data-action="preview" title="Podgląd strony">👁️</button>` : ""}
+            <button type="button" class="bm-quick-btn bm-quick-pause ${t.status === "Paused" ? "active" : ""}" data-action="pause" title="Wstrzymaj">⏸</button>
+            <button type="button" class="bm-quick-btn bm-quick-done ${t.status === "Done" ? "active" : ""}" data-action="done" title="Oznacz jako Gotowe ✓">✓</button>
+            <button type="button" class="bm-quick-btn bm-quick-play ${t.status === "In Progress" ? "active" : ""}" data-action="start" title="Uruchom / W trakcie ▶">▶</button>
           </div>
-          ${t.startDate || t.endDate ? `<div class="card-dates">${escapeHtml(t.startDate || "—")} → ${escapeHtml(t.endDate || "—")}</div>` : ""}
         `;
+
+        card.querySelector('[data-action="prio"]').addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          t.priority = cyclePriority(t.priority);
+          saveTasks();
+          render();
+          const nextSig = getPrioritySignal(t.priority);
+          showToast(`#${t.id} pilność: ${nextSig.icon} ${t.priority}`);
+        });
+
+        const prevBtn = card.querySelector('[data-action="preview"]');
+        if (prevBtn) {
+          prevBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            openFullscreenPreview(t);
+          });
+        }
+
+        card.querySelector('[data-action="start"]').addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          t.status = t.status === "In Progress" ? "Todo" : "In Progress";
+          saveTasks();
+          render();
+          showToast(t.status === "In Progress" ? `▶ #${t.id} uruchomione (W trakcie)` : `↩ #${t.id} → Do zrobienia`);
+        });
+
+        card.querySelector('[data-action="done"]').addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          t.status = t.status === "Done" ? "In Progress" : "Done";
+          saveTasks();
+          render();
+          showToast(t.status === "Done" ? `✅ #${t.id} zrobione!` : `▶ #${t.id} przywrócone do W trakcie`);
+        });
+
+        card.querySelector('[data-action="pause"]').addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          t.status = t.status === "Paused" ? "In Progress" : "Paused";
+          saveTasks();
+          render();
+          showToast(t.status === "Paused" ? `⏸ #${t.id} wstrzymane` : `▶ #${t.id} wznowione`);
+        });
+
         colEl.appendChild(card);
       });
 
       board.appendChild(colEl);
     });
 
+    scaled.appendChild(board);
+    stage.appendChild(scaled);
+    wrapper.appendChild(toolbar);
+    wrapper.appendChild(stage);
+
+    applyBoardZoom(boardZoom);
+
+    toolbar.querySelector("#bm-zoom-out").addEventListener("click", () => applyBoardZoom(boardZoom - 0.1));
+    toolbar.querySelector("#bm-zoom-in").addEventListener("click", () => applyBoardZoom(boardZoom + 0.1));
+    toolbar.querySelector("#bm-zoom-slider").addEventListener("input", (ev) => {
+      applyBoardZoom(Number(ev.target.value) / 100);
+    });
+    toolbar.querySelectorAll("[data-zoom-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        applyBoardZoom(Number(btn.dataset.zoomPreset));
+        render();
+      });
+    });
+    toolbar.querySelector("#bm-toggle-symbols").addEventListener("click", () => {
+      boardSymbolMode = !boardSymbolMode;
+      localStorage.setItem("managing_work_board_symbols_v1", boardSymbolMode ? "1" : "0");
+      render();
+    });
+    stage.addEventListener(
+      "wheel",
+      (ev) => {
+        if (ev.ctrlKey || ev.metaKey) {
+          ev.preventDefault();
+          applyBoardZoom(boardZoom + (ev.deltaY < 0 ? 0.06 : -0.06));
+        }
+      },
+      { passive: false }
+    );
+
     contentEl.innerHTML = "";
-    contentEl.appendChild(board);
+    contentEl.appendChild(wrapper);
   }
 
   function renderTable(list) {
@@ -2726,4 +3128,32 @@
 
   render();
   syncFromDiskIfAvailable();
+
+  // Live multi-user sync (polls tasks.json every 4s when modal is closed)
+  if (location.protocol.startsWith("http")) {
+    let lastSyncedHash = "";
+    setInterval(async () => {
+      if (document.hidden) return;
+      const modalOpen = !document.getElementById("task-modal")?.classList.contains("hidden");
+      if (modalOpen || draggedId != null) return;
+      try {
+        const res = await fetch("/api/tasks", { cache: "no-store" });
+        if (res.status !== 200) return;
+        const txt = await res.text();
+        if (!lastSyncedHash) {
+          lastSyncedHash = txt;
+          return;
+        }
+        if (txt !== lastSyncedHash) {
+          const parsed = JSON.parse(txt);
+          if (Array.isArray(parsed)) {
+            lastSyncedHash = txt;
+            tasks = parsed;
+            localStorage.setItem(STORAGE_KEY, txt);
+            render();
+          }
+        }
+      } catch (_) {}
+    }, 4000);
+  }
 })();
