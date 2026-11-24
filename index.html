@@ -31,6 +31,7 @@
 
     <div class="topbar-actions">
       <button id="btn-new-task" class="btn btn-primary">+ Nowe zadanie</button>
+      <button id="btn-google-sync" class="btn btn-secondary" title="Połącz konto Google i synchronizuj z Kalendarzem Google / iPhone">📅 Google / Kalendarz</button>
       <button id="btn-export" class="btn btn-secondary" title="Eksportuj do pliku JSON">Eksport JSON</button>
       <label class="btn btn-secondary file-btn" title="Importuj z pliku JSON">
         Import JSON
@@ -151,9 +152,46 @@
     </div>
   </div>
 
+  <!-- Modal integracji z kontem Google i Kalendarzem -->
+  <div id="google-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="google-modal-title">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h2 id="google-modal-title">📅 Google Konto &amp; Synchronizacja Kalendarza</h2>
+        <button id="google-modal-close" class="btn btn-ghost icon-only" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+        <div id="google-account-status" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);font-size:14px">
+          Status: <strong>Gotowy do synchronizacji z Google Calendar i iPhone</strong>
+        </div>
+
+        <div style="padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,.35);background:rgba(14,165,233,.08)">
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px">1. Natychmiastowa synchronizacja kalendarza (iPhone + Android + Google)</div>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 10px">Wklej ten link w <strong>Google Calendar → Inne kalendarze → Z adresu URL</strong> lub na iPhonie (<strong>Kalendarz → Dodaj subskrypcję</strong>), albo pobierz plik <code>.ics</code>:</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" id="ics-feed-url" class="input" readonly style="flex:1;min-width:200px;font-size:13px" />
+            <button type="button" id="btn-copy-ics" class="btn btn-secondary">Kopiuj link</button>
+            <a id="btn-download-ics" href="/api/calendar.ics" download="taskkill-studio.ics" class="btn btn-primary">Pobierz .ics</a>
+          </div>
+        </div>
+
+        <div style="padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2)">
+          <div style="font-weight:700;font-size:15px;margin-bottom:6px">2. Połączenie z kontem Google (OAuth 2.0 — zapis bezpośrednio do Google Calendar)</div>
+          <label class="field" style="margin-bottom:8px">
+            <span>Google OAuth Client ID (opcjonalnie — do bezpośredniego zapisu w Google Calendar)</span>
+            <input type="text" id="google-client-id" class="input" placeholder="np. 1234567890-xxxx.apps.googleusercontent.com" />
+          </label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button type="button" id="btn-google-oauth-connect" class="btn btn-primary">🔐 Połącz konto Google</button>
+            <button type="button" id="btn-google-push-today" class="btn btn-secondary">📤 Wyślij dzisiejszy Plan Awaryjny do Google Calendar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="data.js?v=taskkill-v1"></script>
-  <script src="app.js?v=taskkill-v1"></script>
+  <script src="data.js?v=taskkill-v2"></script>
+  <script src="app.js?v=taskkill-v2"></script>
 </body>
 </html>

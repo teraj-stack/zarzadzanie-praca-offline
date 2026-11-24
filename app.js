@@ -3416,4 +3416,140 @@
       } catch (_) {}
     }, 4000);
   }
+
+  // ===== Google Account & Google Calendar Sync (TaskKill Studio) =====
+  const GOOGLE_CID_KEY = "taskkill_google_client_id";
+  let googleAccessToken = null;
+  let googleTokenClient = null;
+
+  function openGoogleCalendarTemplate(task) {
+    const dStart = (task.startDate || new Date().toISOString().slice(0, 10)).replace(/-/g, "");
+    const dEnd = (task.endDate || task.startDate || new Date().toISOString().slice(0, 10)).replace(/-/g, "");
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: `[TaskKill] ${task.title}`,
+      details: `${task.body || ""}\n\nPriorytet: ${task.priority || ""} | Przypisane: ${task.assignee || ""}`.trim(),
+      dates: `${dStart}/${dEnd}`,
+    });
+    window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener");
+  }
+
+  function loadGsiScript() {
+    return new Promise((resolve, reject) => {
+      if (window.google?.accounts?.oauth2) return resolve();
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("Nie udało się załadować Google Identity Services"));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function pushTodayPlanToGoogleCalendar() {
+    const todayItems = tasks.filter(
+      (t) =>
+        t.status !== "Done" &&
+        ((t.labels || []).some((l) => String(l).includes("2026-11-24") || String(l).includes("Dziś")) ||
+          t.priority === "Krytyczny")
+    );
+    if (!todayItems.length) {
+      showToast("Brak otwartych zadań na dziś do wysłania.");
+      return;
+    }
+    if (!googleAccessToken) {
+      // Fallback without OAuth token: open 1-click Google Calendar template for top task
+      openGoogleCalendarTemplate(todayItems[0]);
+      showToast(`Otwarto Google Calendar dla: ${todayItems[0].title}`);
+      return;
+    }
+    let created = 0;
+    for (const t of todayItems) {
+      const dateStr = t.startDate || "2026-11-24";
+      try {
+        const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${googleAccessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            summary: `[${t.priority || "TaskKill"}] ${t.title}`,
+            description: `${t.body || ""}\nPrzypisane: ${t.assignee || ""}`,
+            start: { date: dateStr },
+            end: { date: dateStr },
+          }),
+        });
+        if (res.ok) created++;
+      } catch (_) {}
+    }
+    showToast(`Wysłano ${created}/${todayItems.length} zadań do Google Calendar!`);
+  }
+
+  (function initGoogleSyncModal() {
+    const openBtn = document.getElementById("btn-google-sync");
+    const gModal = document.getElementById("google-modal");
+    const closeBtn = document.getElementById("google-modal-close");
+    const icsInput = document.getElementById("ics-feed-url");
+    const copyIcsBtn = document.getElementById("btn-copy-ics");
+    const cidInput = document.getElementById("google-client-id");
+    const oauthBtn = document.getElementById("btn-google-oauth-connect");
+    const pushBtn = document.getElementById("btn-google-push-today");
+    const statusBox = document.getElementById("google-account-status");
+    if (!openBtn || !gModal) return;
+
+    if (cidInput) cidInput.value = localStorage.getItem(GOOGLE_CID_KEY) || "";
+
+    openBtn.addEventListener("click", () => {
+      if (icsInput) icsInput.value = `${location.origin}/api/calendar.ics`;
+      gModal.classList.remove("hidden");
+    });
+    closeBtn?.addEventListener("click", () => gModal.classList.add("hidden"));
+    gModal.addEventListener("click", (ev) => {
+      if (ev.target === gModal) gModal.classList.add("hidden");
+    });
+
+    copyIcsBtn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(icsInput.value);
+        showToast("Skopiowano link kalendarza .ics!");
+      } catch {
+        icsInput.select();
+        document.execCommand("copy");
+        showToast("Skopiowano link kalendarza .ics!");
+      }
+    });
+
+    oauthBtn?.addEventListener("click", async () => {
+      const clientId = (cidInput?.value || "").trim();
+      if (!clientId) {
+        showToast("Wklej Google OAuth Client ID albo użyj linku .ics powyżej (działa od razu bez klucza!).");
+        cidInput?.focus();
+        return;
+      }
+      localStorage.setItem(GOOGLE_CID_KEY, clientId);
+      try {
+        await loadGsiScript();
+        googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email",
+          callback: (resp) => {
+            if (resp && resp.access_token) {
+              googleAccessToken = resp.access_token;
+              if (statusBox) {
+                statusBox.innerHTML = 'Status: <strong style="color:#4ade80">✓ Połączono z kontem Google (Kalendarz aktywny)</strong>';
+              }
+              openBtn.textContent = "✓ Google Połączono";
+              showToast("Połączono TaskKill Studio z kontem Google!");
+            }
+          },
+        });
+        googleTokenClient.requestAccessToken({ prompt: "consent" });
+      } catch (err) {
+        showToast(err.message || "Błąd połączenia z Google");
+      }
+    });
+
+    pushBtn?.addEventListener("click", () => pushTodayPlanToGoogleCalendar());
+  })();
 })();
