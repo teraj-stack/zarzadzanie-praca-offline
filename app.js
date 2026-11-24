@@ -2114,6 +2114,7 @@
       });
       all[getMindMapPosScope()] = map;
       localStorage.setItem(MINDMAP_POS_KEY, JSON.stringify(all));
+      if (typeof syncLayoutToServer === "function") syncLayoutToServer();
     } catch (_) {}
   }
 
@@ -3389,7 +3390,64 @@
   render();
   syncFromDiskIfAvailable();
 
-  // Live multi-user sync (polls tasks.json every 4s when modal is closed)
+  // Live multi-user sync (polls tasks.json + layout.json every 4s when modal is closed)
+  let lastLayoutHash = "";
+  function buildLayoutPayload() {
+    let positions = {};
+    try { positions = JSON.parse(localStorage.getItem(MINDMAP_POS_KEY) || "{}"); } catch {}
+    return {
+      positions,
+      media: mindmapMedia || {},
+      bg: mindmapBg,
+      updatedAt: Date.now(),
+    };
+  }
+  async function syncLayoutToServer() {
+    if (!location.protocol.startsWith("http")) return;
+    try {
+      const payload = buildLayoutPayload();
+      const txt = JSON.stringify(payload);
+      lastLayoutHash = txt;
+      await fetch("/api/layout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: txt,
+      });
+    } catch (_) {}
+  }
+  async function syncLayoutFromServer() {
+    if (!location.protocol.startsWith("http")) return;
+    try {
+      const res = await fetch("/api/layout", { cache: "no-store" });
+      if (res.status === 204) {
+        // Server has no layout yet: if this device has saved positions/media, upload them!
+        const localPos = localStorage.getItem(MINDMAP_POS_KEY);
+        if (localPos && localPos !== "{}") syncLayoutToServer();
+        return;
+      }
+      if (res.status !== 200) return;
+      const txt = await res.text();
+      if (!txt || txt === lastLayoutHash) return;
+      const parsed = JSON.parse(txt);
+      if (parsed && typeof parsed === "object") {
+        lastLayoutHash = txt;
+        if (parsed.positions && typeof parsed.positions === "object") {
+          localStorage.setItem(MINDMAP_POS_KEY, JSON.stringify(parsed.positions));
+        }
+        if (parsed.media && typeof parsed.media === "object") {
+          mindmapMedia = parsed.media;
+          localStorage.setItem(MINDMAP_MEDIA_KEY, JSON.stringify(mindmapMedia));
+        }
+        if (parsed.bg) {
+          mindmapBg = parsed.bg;
+          localStorage.setItem(MINDMAP_BG_KEY, mindmapBg);
+        }
+        render();
+      }
+    } catch (_) {}
+  }
+  syncLayoutFromServer();
+
   if (location.protocol.startsWith("http")) {
     let lastSyncedHash = "";
     setInterval(async () => {
@@ -3402,9 +3460,7 @@
         const txt = await res.text();
         if (!lastSyncedHash) {
           lastSyncedHash = txt;
-          return;
-        }
-        if (txt !== lastSyncedHash) {
+        } else if (txt !== lastSyncedHash) {
           const parsed = JSON.parse(txt);
           if (Array.isArray(parsed)) {
             lastSyncedHash = txt;
@@ -3413,6 +3469,7 @@
             render();
           }
         }
+        await syncLayoutFromServer();
       } catch (_) {}
     }, 4000);
   }

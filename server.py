@@ -6,6 +6,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(APP_DIR, "tasks.json")
+LAYOUT_FILE = os.path.join(APP_DIR, "layout.json")
 PORT = int(os.environ.get("PORT", "3500"))
 
 
@@ -89,6 +90,19 @@ class LocalOfflineHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(ics_bytes)
             return
+        if path_only == "/api/layout":
+            if os.path.exists(LAYOUT_FILE):
+                with open(LAYOUT_FILE, "rb") as f:
+                    body = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_response(204)
+                self.end_headers()
+            return
         if path_only == "/api/tasks":
             if os.path.exists(DATA_FILE):
                 with open(DATA_FILE, "rb") as f:
@@ -105,7 +119,29 @@ class LocalOfflineHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
-        if self.path == "/api/tasks":
+        path_only = self.path.split("?", 1)[0]
+        if path_only == "/api/layout":
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length)
+            try:
+                parsed = json.loads(raw.decode("utf-8"))
+                if not isinstance(parsed, dict):
+                    raise ValueError("Expected object")
+                tmp_path = LAYOUT_FILE + ".tmp"
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(parsed, f, ensure_ascii=False, indent=2)
+                os.replace(tmp_path, LAYOUT_FILE)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"ok":true}')
+            except Exception as exc:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(exc)}).encode("utf-8"))
+            return
+        if path_only == "/api/tasks":
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length)
             try:
