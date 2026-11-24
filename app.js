@@ -1035,6 +1035,17 @@
     }
   }
 
+  function getTaskEstMinutes(t) {
+    if (typeof t.estMinutes === "number" && t.estMinutes > 0) return t.estMinutes;
+    const txt = `${t.title || ""} ${t.body || ""}`.toLowerCase();
+    if (/kontakt|telefon|apple|prawnik|mail|sms|dzwon|weryfik|sprawdz|podgląd/.test(txt)) return 10;
+    if (/notariusz|spotkanie|właściciel|apteka|zakupy/.test(txt)) return 45;
+    if (/kampani|rezerwac|panel|proktolog|landing|strona|cennik|cml/.test(txt)) return 25;
+    if (t.type === "Bug") return 10;
+    if (t.priority === "Krytyczny") return 15;
+    return t.id % 3 === 0 ? 5 : t.id % 3 === 1 ? 10 : 15;
+  }
+
   async function syncFromDiskIfAvailable() {
     if (!location.protocol.startsWith("http")) return;
     try {
@@ -1565,6 +1576,8 @@
 
       colTasks.forEach((t) => {
         const sig = getPrioritySignal(t.priority);
+        const estMin = getTaskEstMinutes(t);
+        const estBadgeHtml = `<span class="est-time-pill ${t.status === "Done" ? "is-done" : ""}" title="Szacowany realny czas wykonania">${t.status === "Done" ? "✓" : "⏱"} ${estMin} min</span>`;
         const card = document.createElement("article");
         card.className = "card bm-sig-card";
         card.dataset.status = t.status;
@@ -1589,6 +1602,7 @@
             <span class="bm-card-id">
               <span>#${t.id}</span>
               ${t.assignee ? `<span style="opacity:.75">· ${escapeHtml(t.assignee.split(" ")[0])}</span>` : ""}
+              ${estBadgeHtml}
             </span>
             <button type="button" class="bm-prio-trigger ${sig.cls}" data-action="prio" title="${sig.tip}">
               ${sig.icon}
@@ -2466,7 +2480,7 @@
       e._pathEl = path;
       svgEl.appendChild(path);
 
-      // Animated firefly showing patient/task flow direction
+      // Animated firefly + loading sparkles showing active process flow
       if (flowDir === "out" || flowDir === "both") {
         const firefly = document.createElementNS(svgNS, "path");
         firefly.setAttribute("d", dStr);
@@ -2476,6 +2490,15 @@
         firefly.style.animationDuration = e.depth === 1 ? "2.4s" : "3.1s";
         e._fireflyEl = firefly;
         svgEl.appendChild(firefly);
+
+        const sparkle = document.createElementNS(svgNS, "path");
+        sparkle.setAttribute("d", dStr);
+        sparkle.setAttribute("pathLength", "100");
+        sparkle.setAttribute("class", "mindmap-sparkle-trail");
+        sparkle.style.animationDelay = `${-((idx * 0.27) % 2.1).toFixed(2)}s`;
+        sparkle.style.animationDuration = e.depth === 1 ? "1.9s" : "2.4s";
+        e._sparkleEl = sparkle;
+        svgEl.appendChild(sparkle);
       }
       if (flowDir === "in" || flowDir === "both") {
         const fireflyRev = document.createElementNS(svgNS, "path");
@@ -2515,6 +2538,7 @@
         const dStr = getEdgePathD(e);
         if (e._pathEl) e._pathEl.setAttribute("d", dStr);
         if (e._fireflyEl) e._fireflyEl.setAttribute("d", dStr);
+        if (e._sparkleEl) e._sparkleEl.setAttribute("d", dStr);
       });
     }
 
@@ -2658,6 +2682,8 @@
         const flowBtnHtml = `<button type="button" class="mn-flow-btn" title="Kierunek przepływu pacjenta — kliknij, aby przełączyć: → Wejście / ← Powrót / ⇄ Dwukierunkowy">${flowSymbol}</button>`;
         const hasSocialCampaign = Array.isArray(t.labels) && t.labels.includes("Kampania FB / Social");
         const socialBtnHtml = `<button type="button" class="mn-social-tag ${hasSocialCampaign ? "is-active" : ""}" title="Oznacz / odznacz: wymaga kampanii Facebook / Social Media">${hasSocialCampaign ? "📣 FB / SOCIAL" : "+📣 FB"}</button>${flowBtnHtml}`;
+        const estMin = getTaskEstMinutes(t);
+        const estPill = `<span class="est-time-pill ${isDone ? "is-done" : ""}" title="Szacowany realny czas">${isDone ? "✓" : "⏱"} ${estMin} min</span>`;
         el.className = `mn-node mn-node-task owner-${ownerKey} ${n.dir < 0 ? "dir-left" : ""} ${isDone ? "is-done" : ""} ${isPreviewActive ? "is-preview-active" : ""}`;
         el.innerHTML = `
           <div class="mn-node-media-wrap">
@@ -2669,6 +2695,7 @@
                 <div class="mn-task-title" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
                 <div class="mn-task-meta">
                   ${ownerBadgeHtml}
+                  ${estPill}
                   ${socialBtnHtml}
                   <span class="mn-prio-dot mn-prio-${escapeHtml(t.priority)}" title="Priorytet: ${escapeHtml(t.priority)}"></span>
                   <span>#${t.id}</span>
