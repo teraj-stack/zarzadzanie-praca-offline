@@ -766,8 +766,8 @@
   },
   {
     "title": "🏛️ Kontakt z prawnikiem z Urzędu Miasta (zabezpieczenie bytu i kont bankowych)",
-    "body": "Pilny kontakt z bezpłatną pomocą prawną Urzędu Miasta ws. zabezpieczenia środków na życie na kontach bankowych.",
-    "status": "Todo",
+    "body": "ZROBIONE / UMÓWIONE: Urząd Dzielnicy Praga-Północ — jutro (2026-11-25) godz. 10:00, ul. Kłopotowskiego, pokój/gabinet nr 6. WAŻNE: obowiązkowo zabrać dowód osobisty (bez dowodu nie wejdziemy) + kod wizyty u Milenki.",
+    "status": "Done",
     "priority": "Krytyczny",
     "type": "Task",
     "assignee": "Wspólne",
@@ -812,11 +812,11 @@
   },
   {
     "title": "📱 Kontakt z obsługą Apple Support — odblokowanie telefonu",
-    "body": "Zadzwonić lub napisać do wsparcia Apple (Apple Support) w celu odblokowania telefonu.",
-    "status": "Todo",
+    "body": "Milenka dzwoniła na infolinię Apple — nie uzyskała informacji (nie jest właścicielem urządzenia). Wymagany bezpośredni telefon od Janka jako właściciela urządzenia.",
+    "status": "In Progress",
     "priority": "Krytyczny",
     "type": "Task",
-    "assignee": "Wspólne",
+    "assignee": "Janek",
     "labels": [
       "Dziś · 2026-11-24",
       "Pilne techniczne"
@@ -824,5 +824,20 @@
     "startDate": "2026-11-24",
     "endDate": "2026-11-24",
     "id": 54
+  },
+  {
+    "title": "🏛️ Wizyta u prawnika: jutro 10:00, Praga-Północ (ul. Kłopotowskiego, gabinet nr 6)",
+    "body": "Termin: 2026-11-25, godz. 10:00, Urząd Dzielnicy Praga-Północ, ul. Kłopotowskiego, pokój/gabinet nr 6. OBOWIĄZKOWO: zabrać dowód osobisty (bez dowodu nie wejdziemy) + kod wizyty (ma Milenka).",
+    "status": "Todo",
+    "priority": "Krytyczny",
+    "type": "Task",
+    "assignee": "Wspólne",
+    "labels": [
+      "Jutro · 2026-11-25",
+      "Pilne prawne"
+    ],
+    "startDate": "2026-11-25",
+    "endDate": "2026-11-25",
+    "id": 55
   }
 ]
