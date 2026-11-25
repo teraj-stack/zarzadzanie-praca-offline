@@ -73,7 +73,31 @@
   let mindmapGroupBy = "label"; // status | type | priority | label
   let mindmapLayout = "balanced"; // balanced | right
   const mindmapCollapsed = new Set();
+  const MINDMAP_ACTIVE_BRANCH_KEY = "managing_work_mindmap_active_branch_v1";
+  const MINDMAP_FOCUS_ONLY_KEY = "managing_work_mindmap_focus_only_v1";
+  let mindmapActiveBranchId = localStorage.getItem(MINDMAP_ACTIVE_BRANCH_KEY) || "";
+  let mindmapFocusOnly = localStorage.getItem(MINDMAP_FOCUS_ONLY_KEY) !== "0";
+  let mindmapPendingFocusNodeId = null;
   const mindmapTransform = { x: 0, y: 0, scale: 1, initialized: false };
+
+  function isMindMapNodeCollapsed(node) {
+    if (!node) return false;
+    if (node.kind === "branch" && mindmapFocusOnly) {
+      return node.id !== mindmapActiveBranchId;
+    }
+    return mindmapCollapsed.has(node.id);
+  }
+
+  function setMindMapActiveBranch(branchId, focusZoom = false) {
+    mindmapActiveBranchId = branchId || "";
+    localStorage.setItem(MINDMAP_ACTIVE_BRANCH_KEY, mindmapActiveBranchId);
+    if (mindmapActiveBranchId) {
+      mindmapCollapsed.delete(mindmapActiveBranchId);
+    }
+    if (focusZoom && mindmapActiveBranchId) {
+      mindmapPendingFocusNodeId = mindmapActiveBranchId;
+    }
+  }
   let mindmapQuickAdd = null; // { targetLabel, defaults }
   let mindmapMedia = loadMindMapMedia(); // { [nodeId]: { emoji?, sticker?, image? } }
   let mindmapMediaEditor = null; // { nodeId, nodeLabel, tab: 'emoji'|'sticker'|'image' }
@@ -252,11 +276,11 @@
         z-index: 30;
         transform-origin: right center;
         will-change: transform;
-        /* Eye-accommodation curve: fast initial lift, ~82% ultra-gentle deceleration */
+        /* Ultra-soft immediate deceleration curve for preview page lift */
         transition:
-          transform 0.9s cubic-bezier(0.05, 0.96, 0.12, 1),
-          box-shadow 0.9s cubic-bezier(0.05, 0.96, 0.12, 1),
-          border-radius 0.45s ease;
+          transform 1.05s cubic-bezier(0.16, 0.88, 0.24, 1),
+          box-shadow 1.05s cubic-bezier(0.16, 0.88, 0.24, 1),
+          border-radius 0.65s cubic-bezier(0.16, 0.88, 0.24, 1) !important;
       }
       .mm-preview-frame-wrap:hover {
         transform: translate3d(-135px, -12px, 0) scale(1.34);
@@ -559,49 +583,15 @@
       .mn-flow-btn:hover {
         background: rgba(251, 191, 36, 0.32);
       }
-      @keyframes mindmap-firefly-flow {
-        0% {
-          stroke-dashoffset: 100;
-        }
-        100% {
-          stroke-dashoffset: 0;
-        }
-      }
-      @keyframes mindmap-firefly-flow-rev {
-        0% {
-          stroke-dashoffset: 0;
-        }
-        100% {
-          stroke-dashoffset: 100;
-        }
-      }
-      .mindmap-edges path.mindmap-firefly-rev {
-        fill: none;
-        vector-effect: non-scaling-stroke;
-        stroke: #38bdf8;
-        stroke-width: 6px !important;
-        stroke-linecap: round;
-        stroke-dasharray: 12 88;
-        opacity: 0.95 !important;
-        animation: mindmap-firefly-flow-rev 2.9s linear infinite;
-        pointer-events: none;
-      }
+      .mindmap-edges path.mindmap-firefly-rev,
       .mindmap-edges path.mindmap-firefly {
-        fill: none;
-        vector-effect: non-scaling-stroke;
-        stroke: #fef08a;
-        stroke-width: 7px !important;
-        stroke-linecap: round;
-        stroke-dasharray: 14 86;
-        opacity: 1 !important;
-        filter: drop-shadow(0 0 5px #fde047) drop-shadow(0 0 11px #f59e0b);
-        animation: mindmap-firefly-flow 2.8s linear infinite;
-        pointer-events: none;
+        display: none !important;
+        animation: none !important;
       }
-      /* Focus Drawer & Motion Library (natural easing) */
+      /* Focus Drawer & Motion Library (visible silky final-phase deceleration) */
       :root {
-        --bm-ease: cubic-bezier(0.16, 1, 0.3, 1);
-        --bm-duration: 420ms;
+        --bm-ease: cubic-bezier(0.16, 0.88, 0.24, 1);
+        --bm-duration: 920ms;
       }
       .bm-focus-backdrop {
         position: fixed;
@@ -610,7 +600,7 @@
         background: rgba(2, 6, 23, 0.55);
         backdrop-filter: blur(4px);
         opacity: 0;
-        transition: opacity var(--bm-duration) var(--bm-ease);
+        transition: opacity var(--bm-duration) var(--bm-ease) !important;
         display: flex;
         justify-content: flex-end;
       }
@@ -627,7 +617,7 @@
         padding: 24px 26px;
         overflow-y: auto;
         transform: translateX(104%);
-        transition: transform var(--bm-duration) var(--bm-ease);
+        transition: transform var(--bm-duration) var(--bm-ease) !important;
         display: flex;
         flex-direction: column;
         gap: 18px;
@@ -670,17 +660,17 @@
 
   function loadMotionCurve() {
     try {
-      const saved = JSON.parse(localStorage.getItem("bm_motion_curve_v1") || "null");
+      const saved = JSON.parse(localStorage.getItem("bm_motion_curve_v3") || "null");
       if (saved && typeof saved.x1 === "number") return saved;
     } catch {}
-    return { x1: 0.16, y1: 1, x2: 0.3, y2: 1, duration: 420, name: "Spokojny Fokus" };
+    return { x1: 0.16, y1: 0.88, x2: 0.24, y2: 1.0, duration: 920, name: "Płynne wyhamowanie" };
   }
 
   function applyMotionCurve(c) {
     const css = `cubic-bezier(${c.x1.toFixed(2)}, ${c.y1.toFixed(2)}, ${c.x2.toFixed(2)}, ${c.y2.toFixed(2)})`;
     document.documentElement.style.setProperty("--bm-ease", css);
     document.documentElement.style.setProperty("--bm-duration", `${Math.round(c.duration)}ms`);
-    try { localStorage.setItem("bm_motion_curve_v1", JSON.stringify(c)); } catch {}
+    try { localStorage.setItem("bm_motion_curve_v3", JSON.stringify(c)); } catch {}
     return css;
   }
 
@@ -1786,57 +1776,134 @@
     contentEl.appendChild(wrap);
   }
 
+  let roadmapMode = "waterfall";
+
   function renderRoadmap(list) {
-    const dated = list.filter((t) => t.startDate && t.endDate).sort((a, b) => a.endDate.localeCompare(b.endDate));
-    if (!dated.length) {
+    const prioRank = { Krytyczny: 0, Wysoki: 1, Średni: 2, Niski: 3 };
+    const statusRank = { Done: 0, "In Progress": 1, Todo: 2, Paused: 3 };
+
+    const items = list
+      .filter((t) => t.startDate && t.endDate)
+      .slice()
+      .sort((a, b) => {
+        if (roadmapMode === "waterfall") {
+          const sr = (statusRank[a.status] ?? 9) - (statusRank[b.status] ?? 9);
+          if (sr !== 0) return sr;
+          const pr = (prioRank[a.priority] ?? 9) - (prioRank[b.priority] ?? 9);
+          if (pr !== 0) return pr;
+          const ed = (a.endDate || "").localeCompare(b.endDate || "");
+          if (ed !== 0) return ed;
+          return a.id - b.id;
+        }
+        return a.endDate.localeCompare(b.endDate) || a.id - b.id;
+      });
+
+    if (!items.length) {
       contentEl.innerHTML = `<div class="roadmap"><p style="color:var(--muted)">Brak zadań z ustawioną datą startu i końca.</p></div>`;
       return;
     }
 
-    const minMs = Math.min(...dated.map((t) => Date.parse(t.startDate)));
-    const maxMs = Math.max(...dated.map((t) => Date.parse(t.endDate)));
+    const minMs = Math.min(...items.map((t) => Date.parse(t.startDate)));
+    const maxMs = Math.max(...items.map((t) => Date.parse(t.endDate)));
     const span = Math.max(maxMs - minMs, 86400000);
-
     const fmt = (ms) => new Date(ms).toISOString().slice(0, 10);
     const midMs = minMs + span / 2;
 
     const colColor = Object.fromEntries(COLUMNS.map((c) => [c.key, c.color]));
+    const estList = items.map((t) => Math.max(getTaskEstMinutes(t), 15));
+    const totalMin = Math.max(estList.reduce((acc, m) => acc + m, 0), 60);
+    const totalHrs = (totalMin / 60).toFixed(1).replace(".", ",");
+    const remainingMin = items.reduce((acc, t, idx) => (t.status === "Done" ? acc : acc + estList[idx]), 0);
+    const remainingHrs = (remainingMin / 60).toFixed(1).replace(".", ",");
+
+    const formatCumOffset = (mins) => {
+      const h = Math.floor(mins / 60);
+      const m = Math.round(mins % 60);
+      if (h === 0) return `${m} min`;
+      return m === 0 ? `${h}h` : `${h}h ${m}m`;
+    };
+
+    let cumMin = 0;
+    const rowsHtml = items.map((t, idx) => {
+      const estMin = estList[idx];
+      const bg = colColor[t.status] || "#3b82f6";
+      const isDone = t.status === "Done";
+      const sparkleCls = isDone ? "is-done-bar" : "is-sparkle-bar";
+
+      let left = 0;
+      let width = 12;
+      let finishLabel = "";
+
+      if (roadmapMode === "waterfall") {
+        // Krzywa opadająca (Gantt / waterfall): każde zadanie startuje kaskadowo po poprzednim
+        // i ma zwartą szerokość proporcjonalną do czasu trwania — nigdy na całą szerokość sekcji.
+        const maxTrack = 82;
+        const rawStart = (cumMin / totalMin) * maxTrack;
+        const rawW = (estMin / totalMin) * maxTrack;
+        width = Math.max(Math.min(rawW, 18), 6.5);
+        left = Math.min(rawStart, maxTrack - width);
+        cumMin += estMin;
+        const endDateShort = (t.endDate || "").slice(5);
+        finishLabel = isDone
+          ? `✓ Zakończono · ${endDateShort}`
+          : `🏁 Koniec: ${endDateShort} (+${formatCumOffset(cumMin)})`;
+      } else {
+        const s = Date.parse(t.startDate);
+        const e = Math.max(Date.parse(t.endDate), s + 86400000 * 0.5);
+        left = ((s - minMs) / span) * 84;
+        width = Math.max(Math.min(((e - s) / span) * 84, 84 - left), 10);
+        finishLabel = `🏁 ${t.endDate.slice(5)}`;
+      }
+
+      const endTagLeft = Math.min(left + width + 0.9, 83.5);
+
+      return `
+        <div class="roadmap-row ${isDone ? "is-done-row" : ""}">
+          <div class="roadmap-label" data-open="${t.id}" title="${escapeHtml(t.title)}">
+            <strong>#${t.id}</strong>
+            <span class="roadmap-title-text">${escapeHtml(t.title)}</span>
+            <span class="est-time-pill ${isDone ? "is-done" : ""}">${isDone ? "✓" : "⏱"} ${estMin} min</span>
+          </div>
+          <div class="roadmap-track">
+            <div class="roadmap-bar ${sparkleCls}" data-open="${t.id}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%;background:${bg}" title="${escapeHtml(t.title)} — ${finishLabel}">
+              <span>${estMin}m</span>
+            </div>
+            <span class="roadmap-end-tag ${isDone ? "is-done" : ""}" style="left:${endTagLeft.toFixed(2)}%">${escapeHtml(finishLabel)}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
 
     const container = document.createElement("div");
     container.className = "roadmap";
     container.innerHTML = `
-      <div class="roadmap-header">
-        <span>Zadanie (sortowane po dacie końca)</span>
-        <div class="roadmap-dates">
-          <span>${fmt(minMs)}</span>
-          <span>${fmt(midMs)}</span>
-          <span>${fmt(maxMs)}</span>
+      <div class="roadmap-mode-bar">
+        <div class="roadmap-mode-left">
+          <button type="button" class="btn btn-sm ${roadmapMode === "waterfall" ? "btn-primary" : "btn-secondary"}" data-rm-mode="waterfall">📉 Krzywa opadająca (kiedy się skończą)</button>
+          <button type="button" class="btn btn-sm ${roadmapMode === "calendar" ? "btn-primary" : "btn-secondary"}" data-rm-mode="calendar">📅 Widok dat kalendarzowych</button>
+        </div>
+        <div class="roadmap-summary-pill">
+          Łącznie: <strong>${items.length} zadań</strong> · czas całkowity ~<strong>${totalHrs}h</strong> · pozostało ~<strong>${remainingHrs}h</strong>
         </div>
       </div>
-      ${dated.map((t) => {
-        const s = Date.parse(t.startDate);
-        const e = Math.max(Date.parse(t.endDate), s + 86400000 * 0.5);
-        const left = ((s - minMs) / span) * 100;
-        const width = Math.max(((e - s) / span) * 100, 12);
-        const bg = colColor[t.status] || "#3b82f6";
-        const estMin = getTaskEstMinutes(t);
-        const isDone = t.status === "Done";
-        const sparkleCls = isDone ? "is-done-bar" : "is-sparkle-bar";
-        return `
-          <div class="roadmap-row">
-            <div class="roadmap-label" data-open="${t.id}" title="${escapeHtml(t.title)}">
-              <strong>#${t.id}</strong> ${escapeHtml(t.title)}
-              <span class="est-time-pill ${isDone ? "is-done" : ""}" style="margin-left:6px">${isDone ? "✓" : "⏱"} ${estMin} min</span>
-            </div>
-            <div class="roadmap-track">
-              <div class="roadmap-bar ${sparkleCls}" data-open="${t.id}" style="left:${left.toFixed(2)}%;width:${Math.min(width, 100 - left).toFixed(2)}%;background:${bg}">
-                <span>${isDone ? "✓ Gotowe" : "✨ W toku"} · ${estMin} min (${escapeHtml(t.startDate.slice(5))})</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("")}
+      <div class="roadmap-header">
+        <span>Zadanie (${roadmapMode === "waterfall" ? "kolejność realizacji → krzywa opadająca" : "sortowane po dacie końca"})</span>
+        <div class="roadmap-dates">
+          ${roadmapMode === "waterfall"
+            ? `<span>Start (0h)</span><span>25%</span><span>50%</span><span>75%</span><span>Finał (${fmt(maxMs)} · ~${totalHrs}h)</span>`
+            : `<span>${fmt(minMs)}</span><span>${fmt(midMs)}</span><span>${fmt(maxMs)}</span>`
+          }
+        </div>
+      </div>
+      ${rowsHtml}
     `;
+
+    container.querySelectorAll("[data-rm-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        roadmapMode = btn.dataset.rmMode;
+        renderRoadmap(list);
+      });
+    });
 
     container.querySelectorAll("[data-open]").forEach((el) => {
       el.addEventListener("click", () => openModal(Number(el.dataset.open)));
@@ -1941,7 +2008,7 @@
         const titleLen = (t.title || "").length;
         const nodeId = `task-${t.id}`;
         const m = mindmapMedia[nodeId];
-        const estHeight = (titleLen > 28 ? 88 : 74) + (m && m.image ? 114 : 0);
+        const estHeight = (titleLen > 24 ? 116 : 98) + (m && m.image ? 114 : 0);
         return {
           id: nodeId,
           kind: "task",
@@ -1949,7 +2016,7 @@
           label: t.title,
           color: branchColor,
           depth,
-          w: m && (m.emoji || m.sticker) ? 360 : 332,
+          w: m && (m.emoji || m.sticker) ? 420 : 390,
           h: estHeight,
           children: kids,
         };
@@ -1960,7 +2027,10 @@
 
     const branchNodes = groups.map((g) => {
       const m = mindmapMedia[g.id];
-      const extraW = (m && m.emoji ? 32 : 0) + (m && m.sticker ? 40 : 0);
+      const extraW = (m && m.emoji ? 36 : 0) + (m && m.sticker ? 44 : 0);
+      const doneItems = g.items.filter((t) => t.status === "Done").length;
+      const highItems = g.items.filter((t) => t.status !== "Done" && t.priority === "Wysoki").length;
+      const pctBranch = g.items.length ? Math.round((doneItems / g.items.length) * 100) : 0;
       return {
         id: g.id,
         kind: "branch",
@@ -1968,15 +2038,18 @@
         color: g.color,
         defaults: g.defaults,
         totalItems: g.items.length,
+        doneItems,
+        highItems,
+        pctBranch,
         depth: 1,
-        w: Math.min(330, Math.max(210, g.label.length * 10.5 + 88 + extraW)),
-        h: 58 + (m && m.image ? 114 : 0),
+        w: Math.min(900, Math.max(620, g.label.length * 28 + 240 + extraW)),
+        h: 192 + (m && m.image ? 114 : 0),
         children: buildTaskSubtree(g.items, g.color),
       };
     });
 
     const rootMedia = mindmapMedia["root"];
-    const rootExtraW = (rootMedia && rootMedia.emoji ? 32 : 0) + (rootMedia && rootMedia.sticker ? 40 : 0);
+    const rootExtraW = (rootMedia && rootMedia.emoji ? 42 : 0) + (rootMedia && rootMedia.sticker ? 50 : 0);
     return {
       id: "root",
       kind: "root",
@@ -1984,20 +2057,20 @@
       subtitle: `${list.length} zadań • ${pct}% gotowe`,
       color: "#3b82f6",
       depth: 0,
-      w: Math.min(380, Math.max(260, projectTitle.length * 13 + 96 + rootExtraW)),
-      h: 80 + (rootMedia && rootMedia.image ? 114 : 0),
+      w: Math.min(960, Math.max(660, projectTitle.length * 30 + 220 + rootExtraW)),
+      h: 210 + (rootMedia && rootMedia.image ? 114 : 0),
       children: branchNodes,
     };
   }
 
   function layoutMindMapTree(root, mode) {
-    const V_GAP = 14;
-    const BRANCH_GAP = 26;
-    const H_GAP_ROOT = 76;
-    const H_GAP_CHILD = 56;
+    const V_GAP = 34;
+    const BRANCH_GAP = 68;
+    const H_GAP_ROOT = 175;
+    const H_GAP_CHILD = 96;
 
     function computeSubtreeHeight(node) {
-      const collapsed = mindmapCollapsed.has(node.id);
+      const collapsed = isMindMapNodeCollapsed(node);
       if (collapsed || !node.children.length) {
         node._subH = node.h + V_GAP;
         return node._subH;
@@ -2046,7 +2119,7 @@
       node.y = centerY;
       nodes.push(node);
 
-      const collapsed = mindmapCollapsed.has(node.id);
+      const collapsed = isMindMapNodeCollapsed(node);
       if (!collapsed && node.children.length) {
         const totalH = node.children.reduce((acc, c) => acc + c._subH, 0);
         let curY = centerY - totalH / 2;
@@ -2159,8 +2232,24 @@
   function getEdgePathD(e, ox = 0, oy = 0) {
     const { x1, y1, x2, y2 } = getEdgeCoords(e);
     const sx1 = x1 + ox, sy1 = y1 + oy, sx2 = x2 + ox, sy2 = y2 + oy;
-    const mx = (sx1 + sx2) / 2;
-    return `M ${sx1} ${sy1} C ${mx} ${sy1}, ${mx} ${sy2}, ${sx2} ${sy2}`;
+    const dx = sx2 - sx1;
+    const dy = sy2 - sy1;
+    if (Math.abs(dy) < 2 || Math.abs(dx) < 8) {
+      return `M ${sx1} ${sy1} L ${sx2} ${sy2}`;
+    }
+    const dirX = dx >= 0 ? 1 : -1;
+    const dirY = dy >= 0 ? 1 : -1;
+    // Clean orthogonal rounded-elbow tree connectors (matching the SKILL.md diagram style)
+    const elbowX = sx1 + dx * 0.38;
+    const r = Math.min(26, Math.abs(elbowX - sx1), Math.abs(sx2 - elbowX), Math.abs(dy) / 2);
+    return [
+      `M ${sx1} ${sy1}`,
+      `L ${elbowX - dirX * r} ${sy1}`,
+      `Q ${elbowX} ${sy1} ${elbowX} ${sy1 + dirY * r}`,
+      `L ${elbowX} ${sy2 - dirY * r}`,
+      `Q ${elbowX} ${sy2} ${elbowX + dirX * r} ${sy2}`,
+      `L ${sx2} ${sy2}`,
+    ].join(" ");
   }
 
   function exportMindMapSvg(layout) {
@@ -2232,14 +2321,32 @@
   function renderMindMap(list) {
     ensureLivePreviewStyles();
     const tree = buildMindMapTree(list);
+    if (mindmapActiveBranchId && !tree.children.some((b) => b.id === mindmapActiveBranchId)) {
+      mindmapActiveBranchId = "";
+      localStorage.setItem(MINDMAP_ACTIVE_BRANCH_KEY, "");
+    }
     const layout = layoutMindMapTree(tree, mindmapLayout);
 
-    const previewTasks = list.filter((t) => t.url);
+    const activeBranchNode = tree.children.find((b) => b.id === mindmapActiveBranchId) || null;
+    const activeBranchTaskIds = new Set();
+    if (activeBranchNode) {
+      const walkBranch = (node) => {
+        if (node.task) activeBranchTaskIds.add(node.task.id);
+        (node.children || []).forEach(walkBranch);
+      };
+      walkBranch(activeBranchNode);
+    }
+
+    const allPreviewTasks = list.filter((t) => t.url);
+    const previewTasks =
+      mindmapFocusOnly && activeBranchTaskIds.size
+        ? allPreviewTasks.filter((t) => activeBranchTaskIds.has(t.id))
+        : allPreviewTasks;
     if (!mindmapPreviewTaskId && previewTasks.length) {
       mindmapPreviewTaskId = previewTasks[0].id;
     }
     const activePreviewTask =
-      list.find((t) => t.id === mindmapPreviewTaskId && t.url) || previewTasks[0] || null;
+      previewTasks.find((t) => t.id === mindmapPreviewTaskId && t.url) || previewTasks[0] || null;
     if (activePreviewTask) {
       mindmapPreviewTaskId = activePreviewTask.id;
     }
@@ -2275,13 +2382,26 @@
           </select>
           <input type="file" id="mm-bg-file" accept="image/*" hidden />
 
+          <span class="mindmap-control-label">Aktywny segment:</span>
+          <select id="mm-active-branch-select" class="select" aria-label="Wybierz aktywny segment projektu">
+            <option value="" ${!mindmapActiveBranchId ? "selected" : ""}>— Przegląd (wszystkie zwinięte) —</option>
+            ${tree.children.map((b) => `<option value="${escapeHtml(b.id)}" ${mindmapActiveBranchId === b.id ? "selected" : ""}>${escapeHtml(b.label)} (${b.totalItems})</option>`).join("")}
+          </select>
+
+          <button type="button" id="mm-focus-only" class="btn ${mindmapFocusOnly ? "btn-primary" : "btn-secondary"}" title="Odświeżaj i rozwijaj tylko zaznaczony aktywny segment">
+            🎯 ${mindmapFocusOnly ? "Tylko aktywna: WŁ" : "Tylko aktywna: WYŁ"}
+          </button>
+
           <button type="button" id="mm-toggle-all" class="btn btn-secondary">
-            ${mindmapCollapsed.size ? "Rozwiń wszystko" : "Zwiń gałęzie"}
+            ${mindmapFocusOnly ? (mindmapActiveBranchId ? "Zwiń do przeglądu" : "Pokaż wszystkie") : (mindmapCollapsed.size ? "Rozwiń wszystko" : "Zwiń gałęzie")}
           </button>
           <button type="button" id="mm-reset-pos" class="btn btn-secondary" title="Przywróć automatyczne wyrównanie węzłów">Wyrównaj układ</button>
         </div>
 
         <div class="mindmap-controls-right">
+          <a href="/motion-demo.html" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none" title="Otwórz interaktywne porównanie animacji i wyhamowania (Modele A, B, C)">
+            🎬 Demo wyhamowania
+          </a>
           <button type="button" id="mm-toggle-preview" class="btn ${mindmapPreviewOpen ? "btn-primary" : "btn-secondary"}" title="Pokaż lub ukryj panel miniaturek na żywo">
             🖼️ ${mindmapPreviewOpen ? "Miniaturki: WŁ" : "Miniaturki: WYŁ"}
           </button>
@@ -2301,7 +2421,7 @@
             <svg class="mindmap-edges" id="mm-edges" width="1" height="1"></svg>
             <div class="mindmap-nodes" id="mm-nodes"></div>
           </div>
-          <div class="mindmap-hint">Kliknij kafelek = podgląd miniaturki na żywo • 2× klik = edytuj zadanie • Przeciągaj węzły = układ • Scroll = zoom</div>
+          <div class="mindmap-hint">Kliknij poduszkę segmentu = zaznacz, przybliż i rozwiń tylko tę część • Checkbox na poduszce = aktywny segment • Scroll = zoom</div>
         </div>
 
         <aside class="mm-preview-dock ${mindmapPreviewXl ? "is-xl" : ""} ${!mindmapPreviewOpen || !activePreviewTask ? "hidden" : ""}" id="mm-preview-dock">
@@ -2484,36 +2604,7 @@
       e._pathEl = path;
       svgEl.appendChild(path);
 
-      // Animated firefly + loading sparkles showing active process flow
-      if (flowDir === "out" || flowDir === "both") {
-        const firefly = document.createElementNS(svgNS, "path");
-        firefly.setAttribute("d", dStr);
-        firefly.setAttribute("pathLength", "100");
-        firefly.setAttribute("class", "mindmap-firefly");
-        firefly.style.animationDelay = `${-((idx * 0.33) % 2.8).toFixed(2)}s`;
-        firefly.style.animationDuration = e.depth === 1 ? "2.4s" : "3.1s";
-        e._fireflyEl = firefly;
-        svgEl.appendChild(firefly);
-
-        const sparkle = document.createElementNS(svgNS, "path");
-        sparkle.setAttribute("d", dStr);
-        sparkle.setAttribute("pathLength", "100");
-        sparkle.setAttribute("class", "mindmap-sparkle-trail");
-        sparkle.style.animationDelay = `${-((idx * 0.27) % 2.1).toFixed(2)}s`;
-        sparkle.style.animationDuration = e.depth === 1 ? "1.9s" : "2.4s";
-        e._sparkleEl = sparkle;
-        svgEl.appendChild(sparkle);
-      }
-      if (flowDir === "in" || flowDir === "both") {
-        const fireflyRev = document.createElementNS(svgNS, "path");
-        fireflyRev.setAttribute("d", dStr);
-        fireflyRev.setAttribute("pathLength", "100");
-        fireflyRev.setAttribute("class", "mindmap-firefly-rev");
-        fireflyRev.style.animationDelay = `${-((idx * 0.41) % 2.9).toFixed(2)}s`;
-        fireflyRev.style.animationDuration = "2.9s";
-        if (!e._fireflyEl) e._fireflyEl = fireflyRev;
-        svgEl.appendChild(fireflyRev);
-      }
+      // Static clean edges (animations removed for maximum responsiveness and low CPU usage)
     });
 
     // Helper: collect node + visible descendants for subtree dragging
@@ -2522,7 +2613,7 @@
       if (!includeKids) return list;
       const visibleIds = new Set(layout.nodes.map((x) => x.id));
       function walk(node) {
-        if (mindmapCollapsed.has(node.id)) return;
+        if (isMindMapNodeCollapsed(node)) return;
         (node.children || []).forEach((c) => {
           if (visibleIds.has(c.id)) {
             list.push(c);
@@ -2613,19 +2704,48 @@
           }
         });
       } else if (n.kind === "branch") {
-        el.className = "mn-node mn-node-branch";
         const hasKids = n.children.length > 0;
-        const isCollapsed = mindmapCollapsed.has(n.id);
+        const isCollapsed = isMindMapNodeCollapsed(n);
+        const isActiveBranch = mindmapActiveBranchId === n.id;
+        const isInactiveDim = mindmapFocusOnly && mindmapActiveBranchId && !isActiveBranch;
+        el.className = `mn-node mn-node-branch ${isActiveBranch ? "is-active-branch" : ""} ${isInactiveDim ? "is-inactive-branch" : ""} ${isCollapsed ? "is-collapsed-branch" : ""}`;
+        const urgentSignal = n.highItems ? `<span class="mn-branch-urgent">🔥 ${n.highItems} pilne</span>` : "";
         el.innerHTML = `
           <div class="mn-node-media-wrap">
             ${imageHtml}
-            <div class="mn-node-row">
-              ${mediaPrefix || `<span class="mn-branch-dot"></span>`}
-              <span class="mn-branch-title" title="${escapeHtml(n.label)}">${escapeHtml(n.label)}</span>
-              <span class="mn-branch-count">${n.totalItems}</span>
+            <div class="mn-branch-top">
+              <div class="mn-branch-head-left">
+                ${mediaPrefix || `<span class="mn-branch-dot"></span>`}
+                <span class="mn-branch-title" title="${escapeHtml(n.label)}">${escapeHtml(n.label)}</span>
+              </div>
+              <button type="button" class="mn-branch-select-btn ${isActiveBranch ? "is-selected" : ""}" title="${isActiveBranch ? "Aktywny segment — kliknij, aby odznaczyć i zwinąć" : "Zaznacz jako aktywny segment roboczy"}">
+                ${isActiveBranch ? "☑ AKTYWNA" : "☐ Wybierz"}
+              </button>
+            </div>
+            <div class="mn-branch-signal">
+              <span class="mn-branch-count">${n.doneItems}/${n.totalItems} • ${n.pctBranch}%</span>
+              ${urgentSignal}
+              <span class="mn-branch-expand-hint">${isCollapsed ? (hasKids ? "🔍 Przybliż i kliknij, aby rozwinąć" : "Brak zadań") : "Rozwinięte"}</span>
             </div>
           </div>
         `;
+
+        const selectBranchBtn = el.querySelector(".mn-branch-select-btn");
+        if (selectBranchBtn) {
+          selectBranchBtn.addEventListener("mousedown", (ev) => ev.stopPropagation());
+          selectBranchBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            if (isActiveBranch) {
+              setMindMapActiveBranch("", false);
+              if (!mindmapFocusOnly) mindmapCollapsed.add(n.id);
+              showToast(`Odznaczono segment "${n.label}"`);
+            } else {
+              setMindMapActiveBranch(n.id, true);
+              showToast(`Aktywny segment: "${n.label}"`);
+            }
+            render();
+          });
+        }
 
         if (hasKids) {
           const foldBtn = document.createElement("button");
@@ -2635,8 +2755,13 @@
           foldBtn.textContent = isCollapsed ? `${n.children.length}` : "−";
           foldBtn.addEventListener("click", (ev) => {
             ev.stopPropagation();
-            if (mindmapCollapsed.has(n.id)) mindmapCollapsed.delete(n.id);
-            else mindmapCollapsed.add(n.id);
+            if (mindmapFocusOnly) {
+              if (isActiveBranch) setMindMapActiveBranch("", false);
+              else setMindMapActiveBranch(n.id, true);
+            } else {
+              if (mindmapCollapsed.has(n.id)) mindmapCollapsed.delete(n.id);
+              else mindmapCollapsed.add(n.id);
+            }
             render();
           });
           el.appendChild(foldBtn);
@@ -2657,9 +2782,21 @@
         el.addEventListener("click", (ev) => {
           ev.stopPropagation();
           if (suppressNextClick) { suppressNextClick = false; return; }
-          if (hasKids) {
-            if (mindmapCollapsed.has(n.id)) mindmapCollapsed.delete(n.id);
-            else mindmapCollapsed.add(n.id);
+          if (!hasKids) return;
+          if (mindmapFocusOnly) {
+            if (isActiveBranch && mindmapTransform.scale >= 0.72) {
+              setMindMapActiveBranch("", false);
+            } else {
+              setMindMapActiveBranch(n.id, true);
+            }
+            render();
+          } else {
+            if (isCollapsed) {
+              mindmapCollapsed.delete(n.id);
+              if (mindmapTransform.scale < 0.72) mindmapPendingFocusNodeId = n.id;
+            } else {
+              mindmapCollapsed.add(n.id);
+            }
             render();
           }
         });
@@ -3017,20 +3154,52 @@
     }
 
     function applyTransform() {
-      stage.style.transform = `translate(${mindmapTransform.x}px, ${mindmapTransform.y}px) scale(${mindmapTransform.scale})`;
+      stage.style.transform = `translate3d(${mindmapTransform.x}px, ${mindmapTransform.y}px, 0) scale(${mindmapTransform.scale})`;
       zoomPctEl.textContent = `${Math.round(mindmapTransform.scale * 100)}%`;
+      viewport.classList.toggle("is-far-zoom", mindmapTransform.scale < 0.65);
     }
 
-    function fitToViewport(allowZoomOut = false) {
+    function focusOnNode(nodeId, targetScale = 0.92) {
+      const targetNode = layout.nodes.find((x) => x.id === nodeId);
+      if (!targetNode) return false;
+      const rect = viewport.getBoundingClientRect();
+      const vw = rect.width || 1100;
+      const vh = rect.height || 620;
+      const scale = Math.min(MAX_SCALE, Math.max(targetScale, mindmapTransform.scale));
+      mindmapTransform.scale = scale;
+      mindmapTransform.x = vw / 2 - targetNode.x * scale;
+      mindmapTransform.y = vh / 2 - targetNode.y * scale;
+      mindmapTransform.initialized = true;
+      applyTransform();
+      return true;
+    }
+
+    const MIN_SCALE = 0.15;
+    const MAX_SCALE = 3.0;
+
+    function zoomAtPoint(clientX, clientY, factor) {
+      const rect = viewport.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
+      const prevScale = mindmapTransform.scale;
+      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prevScale * factor));
+      if (nextScale === prevScale) return;
+      const ratio = nextScale / prevScale;
+      mindmapTransform.x = mx - (mx - mindmapTransform.x) * ratio;
+      mindmapTransform.y = my - (my - mindmapTransform.y) * ratio;
+      mindmapTransform.scale = nextScale;
+      applyTransform();
+    }
+
+    function fitToViewport(allowZoomOut = true) {
       const rect = viewport.getBoundingClientRect();
       const vw = rect.width || 1100;
       const vh = rect.height || 620;
       const { minX, maxX, minY, maxY } = layout.computeBounds();
       const bw = Math.max(200, maxX - minX);
       const bh = Math.max(150, maxY - minY);
-      const fitScale = Math.min(1.15, Math.max(0.32, Math.min((vw - 70) / bw, (vh - 70) / bh)));
-      // On initial load keep scale readable (at least 0.95 = 95%) instead of shrinking to 32%
-      const scale = allowZoomOut ? fitScale : Math.max(0.95, fitScale);
+      const fitScale = Math.min(1.15, Math.max(MIN_SCALE, Math.min((vw - 64) / bw, (vh - 64) / bh)));
+      const scale = allowZoomOut ? fitScale : Math.max(0.75, fitScale);
       const cx = (minX + maxX) / 2;
       const cy = (minY + maxY) / 2;
       mindmapTransform.scale = scale;
@@ -3040,8 +3209,14 @@
       applyTransform();
     }
 
-    if (!mindmapTransform.initialized) {
-      requestAnimationFrame(() => fitToViewport(false));
+    if (mindmapPendingFocusNodeId) {
+      const pendingId = mindmapPendingFocusNodeId;
+      mindmapPendingFocusNodeId = null;
+      requestAnimationFrame(() => {
+        if (!focusOnNode(pendingId, 0.92)) fitToViewport(true);
+      });
+    } else if (!mindmapTransform.initialized) {
+      requestAnimationFrame(() => fitToViewport(true));
     } else {
       applyTransform();
     }
@@ -3114,68 +3289,63 @@
       window.removeEventListener("mouseup", onMouseUp);
     };
 
-    // Smooth macOS trackpad navigation:
-    // - Two-finger scroll (!ctrlKey) = smooth pan (przesuwanie drzewka)
-    // - Pinch-to-zoom (ctrlKey / metaKey) = gentle, smoothed zoom
-    let targetTx = mindmapTransform.x;
-    let targetTy = mindmapTransform.y;
-    let targetScale = mindmapTransform.scale;
-    let smoothRaf = null;
-
-    function startSmoothLoop() {
-      if (smoothRaf) return;
-      const step = () => {
-        const dx = targetTx - mindmapTransform.x;
-        const dy = targetTy - mindmapTransform.y;
-        const ds = targetScale - mindmapTransform.scale;
-        if (Math.abs(dx) < 0.35 && Math.abs(dy) < 0.35 && Math.abs(ds) < 0.0008) {
-          mindmapTransform.x = targetTx;
-          mindmapTransform.y = targetTy;
-          mindmapTransform.scale = targetScale;
-          applyTransform();
-          smoothRaf = null;
-          return;
-        }
-        mindmapTransform.x += dx * 0.24;
-        mindmapTransform.y += dy * 0.24;
-        mindmapTransform.scale += ds * 0.22;
-        applyTransform();
-        smoothRaf = requestAnimationFrame(step);
-      };
-      smoothRaf = requestAnimationFrame(step);
-    }
-
+    // Direct, zero-lag zoom & pan:
+    // - Wheel / trackpad pinch (ctrlKey/metaKey) or vertical wheel = instant zoom toward cursor
+    // - Shift + wheel or horizontal trackpad scroll = pan
+    // - Drag on canvas = pan; double-click empty canvas = fit to viewport
     viewport.addEventListener(
       "wheel",
       (ev) => {
         ev.preventDefault();
-        if (!smoothRaf) {
-          targetTx = mindmapTransform.x;
-          targetTy = mindmapTransform.y;
-          targetScale = mindmapTransform.scale;
+        if (ev.shiftKey) {
+          mindmapTransform.x -= (ev.deltaX || ev.deltaY);
+          mindmapTransform.y -= ev.deltaX ? ev.deltaY : 0;
+          applyTransform();
+          return;
         }
-        if (ev.ctrlKey || ev.metaKey) {
-          // Pinch-to-zoom: gentle sensitivity + damped motion
-          const rect = viewport.getBoundingClientRect();
-          const mx = ev.clientX - rect.left;
-          const my = ev.clientY - rect.top;
-          const clampedDelta = Math.max(-45, Math.min(45, ev.deltaY));
-          const factor = Math.exp(-clampedDelta * 0.0038);
-          const prevScale = targetScale;
-          const nextScale = Math.min(2.2, Math.max(0.28, prevScale * factor));
-          const ratio = nextScale / prevScale;
-          targetTx = mx - (mx - targetTx) * ratio;
-          targetTy = my - (my - targetTy) * ratio;
-          targetScale = nextScale;
+        const isPinch = ev.ctrlKey || ev.metaKey;
+        if (isPinch || Math.abs(ev.deltaY) >= Math.abs(ev.deltaX)) {
+          const unitScale = ev.deltaMode === 1 ? 28 : ev.deltaMode === 2 ? 240 : 1;
+          const dy = Math.max(-160, Math.min(160, ev.deltaY * unitScale));
+          const sensitivity = isPinch ? 0.012 : 0.0025;
+          const factor = Math.exp(-dy * sensitivity);
+          zoomAtPoint(ev.clientX, ev.clientY, factor);
         } else {
-          // Two-finger scroll: smooth panning of the tree
-          targetTx -= ev.deltaX * 0.85;
-          targetTy -= ev.deltaY * 0.85;
+          mindmapTransform.x -= ev.deltaX;
+          mindmapTransform.y -= ev.deltaY;
+          applyTransform();
         }
-        startSmoothLoop();
       },
       { passive: false }
     );
+
+    // Safari / trackpad gesture events fallback
+    let gestureStartScale = 1;
+    viewport.addEventListener("gesturestart", (ev) => {
+      ev.preventDefault();
+      gestureStartScale = mindmapTransform.scale;
+    });
+    viewport.addEventListener("gesturechange", (ev) => {
+      ev.preventDefault();
+      const target = Math.min(MAX_SCALE, Math.max(MIN_SCALE, gestureStartScale * (ev.scale || 1)));
+      const factor = target / mindmapTransform.scale;
+      zoomAtPoint(ev.clientX || viewport.getBoundingClientRect().left + viewport.clientWidth / 2,
+                  ev.clientY || viewport.getBoundingClientRect().top + viewport.clientHeight / 2,
+                  factor);
+    });
+
+    // Responsive refit when viewport resizes
+    const resizeObserver = new ResizeObserver(() => {
+      if (mindmapTransform.initialized) {
+        applyTransform();
+      }
+    });
+    resizeObserver.observe(viewport);
+    const prevCleanup = renderMindMap._cleanup;
+    renderMindMap._cleanup = () => {
+      if (prevCleanup) prevCleanup();
+      resizeObserver.disconnect();
+    };
 
     // Toolbar controls
     shell.querySelector("#mm-group-select").addEventListener("change", (ev) => {
@@ -3191,8 +3361,37 @@
       render();
     });
 
+    const activeBranchSelect = shell.querySelector("#mm-active-branch-select");
+    if (activeBranchSelect) {
+      activeBranchSelect.addEventListener("change", (ev) => {
+        const nextId = ev.target.value;
+        setMindMapActiveBranch(nextId, Boolean(nextId));
+        if (!nextId) mindmapTransform.initialized = false;
+        render();
+      });
+    }
+
+    const focusOnlyBtn = shell.querySelector("#mm-focus-only");
+    if (focusOnlyBtn) {
+      focusOnlyBtn.addEventListener("click", () => {
+        mindmapFocusOnly = !mindmapFocusOnly;
+        localStorage.setItem(MINDMAP_FOCUS_ONLY_KEY, mindmapFocusOnly ? "1" : "0");
+        mindmapTransform.initialized = false;
+        render();
+        showToast(mindmapFocusOnly ? "Tryb: aktywny tylko zaznaczony segment" : "Tryb: ręczne rozwijanie wszystkich gałęzi");
+      });
+    }
+
     shell.querySelector("#mm-toggle-all").addEventListener("click", () => {
-      if (mindmapCollapsed.size) {
+      if (mindmapFocusOnly) {
+        if (mindmapActiveBranchId) {
+          setMindMapActiveBranch("", false);
+        } else {
+          mindmapFocusOnly = false;
+          localStorage.setItem(MINDMAP_FOCUS_ONLY_KEY, "0");
+          mindmapCollapsed.clear();
+        }
+      } else if (mindmapCollapsed.size) {
         mindmapCollapsed.clear();
       } else {
         tree.children.forEach((b) => mindmapCollapsed.add(b.id));
@@ -3210,27 +3409,15 @@
 
     shell.querySelector("#mm-zoom-in").addEventListener("click", () => {
       const rect = viewport.getBoundingClientRect();
-      const cx = rect.width / 2, cy = rect.height / 2;
-      const next = Math.min(2.2, mindmapTransform.scale * 1.18);
-      const r = next / mindmapTransform.scale;
-      mindmapTransform.x = cx - (cx - mindmapTransform.x) * r;
-      mindmapTransform.y = cy - (cy - mindmapTransform.y) * r;
-      mindmapTransform.scale = next;
-      applyTransform();
+      zoomAtPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, 1.25);
     });
 
     shell.querySelector("#mm-zoom-out").addEventListener("click", () => {
       const rect = viewport.getBoundingClientRect();
-      const cx = rect.width / 2, cy = rect.height / 2;
-      const next = Math.max(0.25, mindmapTransform.scale * 0.85);
-      const r = next / mindmapTransform.scale;
-      mindmapTransform.x = cx - (cx - mindmapTransform.x) * r;
-      mindmapTransform.y = cy - (cy - mindmapTransform.y) * r;
-      mindmapTransform.scale = next;
-      applyTransform();
+      zoomAtPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, 0.8);
     });
 
-    shell.querySelector("#mm-fit").addEventListener("click", fitToViewport);
+    shell.querySelector("#mm-fit").addEventListener("click", () => fitToViewport(true));
     shell.querySelector("#mm-export-svg").addEventListener("click", () => exportMindMapSvg(layout));
   }
 
@@ -3479,31 +3666,7 @@
   }
   syncLayoutFromServer();
 
-  if (location.protocol.startsWith("http")) {
-    let lastSyncedHash = "";
-    setInterval(async () => {
-      if (document.hidden) return;
-      const modalOpen = !document.getElementById("task-modal")?.classList.contains("hidden");
-      if (modalOpen || draggedId != null) return;
-      try {
-        const res = await fetch("/api/tasks", { cache: "no-store" });
-        if (res.status !== 200) return;
-        const txt = await res.text();
-        if (!lastSyncedHash) {
-          lastSyncedHash = txt;
-        } else if (txt !== lastSyncedHash) {
-          const parsed = JSON.parse(txt);
-          if (Array.isArray(parsed)) {
-            lastSyncedHash = txt;
-            tasks = parsed;
-            localStorage.setItem(STORAGE_KEY, txt);
-            render();
-          }
-        }
-        await syncLayoutFromServer();
-      } catch (_) {}
-    }, 4000);
-  }
+  // Auto-polling co 4s wyłączony — drzewo odświeża się wyłącznie po akcji użytkownika na aktywnym segmencie.
 
   // ===== Google Account & Google Calendar Sync (TaskKill Studio) =====
   const GOOGLE_CID_KEY = "taskkill_google_client_id";

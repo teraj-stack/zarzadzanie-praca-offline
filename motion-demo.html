@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratorium Ruchu i Wyhamowania — Porównanie Krzywych Beziera</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0b1120;
+      color: #f8fafc;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .sub { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn-sec {
+      background: #1e293b;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #111827;
+      border: 2px solid rgba(148, 163, 184, 0.2);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card.is-b { border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18); }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .title { font-size: 19px; font-weight: 800; margin: 6px 0 2px; }
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      background: #020617;
+      padding: 5px 9px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+    .track {
+      position: relative;
+      height: 68px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 8px;
+    }
+    .track-finish {
+      position: absolute;
+      right: 12px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: rgba(148, 163, 184, 0.3);
+      border-right: 1px dashed rgba(248, 250, 252, 0.25);
+    }
+    .puck {
+      width: 112px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: #fff;
+      transform: translateX(0);
+      will-change: transform;
+    }
+    .graph-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    svg.curve {
+      width: 120px;
+      height: 92px;
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      flex-shrink: 0;
+    }
+    .desc { font-size: 13px; color: #94a3b8; line-height: 1.45; }
+    .drawer-demo-wrap {
+      background: #111827;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 20px;
+      padding: 20px;
+    }
+    .drawer-stage {
+      position: relative;
+      height: 220px;
+      background: radial-gradient(circle at 20% 20%, #1e293b, #020617);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex;
+      align-items: center;
+      padding-left: 24px;
+      color: #64748b;
+      font-size: 14px;
+    }
+    .demo-drawer {
+      position: absolute;
+      top: 12px;
+      bottom: 12px;
+      right: 12px;
+      width: min(360px, 84%);
+      background: #0f172a;
+      border: 2px solid #a855f7;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: -18px 0 42px rgba(0, 0, 0, 0.55);
+      transform: translateX(115%);
+      will-change: transform;
+    }
+    .demo-drawer.is-open { transform: translateX(0); }
+    .demo-drawer h3 { margin: 0 0 6px; font-size: 17px; color: #fff; }
+    .demo-drawer p { margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🎬 Laboratorium Ruchu i Wyhamowania</h1>
+        <div class="sub">Porównanie na żywo 3 modeli krzywych Beziera (start → długie wyhamowanie w końcowej fazie)</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="play-all">▶ Uruchom wszystkie 3 naraz</button>
+        <button class="btn btn-sec" id="reset-all">↺ Resetuj na start</button>
+      </div>
+    </header>
+
+    <div class="grid" id="cards"></div>
+
+    <div class="drawer-demo-wrap">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <strong style="font-size:17px">Podgląd wysuwanego okna (Focus Drawer)</strong>
+          <div class="sub" id="drawer-status">Kliknij dowolny model, aby zobaczyć jak okno wjeżdża i wyhamowuje na końcu.</div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-sec" data-drawer="A">▶ Model A (480 ms)</button>
+          <button class="btn" data-drawer="B">▶ Model B — Fioletowy (820 ms)</button>
+          <button class="btn btn-sec" data-drawer="C">▶ Model C (620 ms)</button>
+          <button class="btn btn-sec" id="close-drawer">✕ Zamknij</button>
+        </div>
+      </div>
+      <div class="drawer-stage">
+        <div>Tło strony (kliknij przycisk powyżej, aby wysunąć panel z wybranym wyhamowaniem)</div>
+        <div class="demo-drawer" id="demo-drawer">
+          <h3 id="drawer-title">Model B — Ostre wyhamowanie</h3>
+          <p id="drawer-desc">Szybki wjazd w pierwszych 25% czasu, a potem długie, aksamitne wyhamowanie ostatnich 15–20% drogi — bez szarpnięcia na końcu.</p>
+          <div style="margin-top:12px"><span class="code" id="drawer-code">cubic-bezier(0.04, 0.96, 0.08, 1.00) · 820ms</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MODELS = [
+      {
+        id: "A",
+        name: "Model A — Miękki domyk",
+        color: "#38bdf8",
+        ease: "cubic-bezier(0.16, 1.00, 0.30, 1.00)",
+        pts: [0.16, 1.0, 0.30, 1.0],
+        duration: 480,
+        desc: "Żwawy start i równe, spokojne hamowanie w drugiej połowie. Jak szuflada z cichym domykiem (soft-close)."
+      },
+      {
+        id: "B",
+        name: "Model B — Ostre wyhamowanie",
+        color: "#a855f7",
+        ease: "cubic-bezier(0.04, 0.96, 0.08, 1.00)",
+        pts: [0.04, 0.96, 0.08, 1.0],
+        duration: 820,
+        desc: "Fioletowa krzywa: bardzo mocny start (ok. 80% drogi w pierwszej ćwiartce) i bardzo długie, ciężkie wyhamowanie do zera."
+      },
+      {
+        id: "C",
+        name: "Model C — Ciężki sunący panel",
+        color: "#34d399",
+        ease: "cubic-bezier(0.32, 0.72, 0.00, 1.00)",
+        pts: [0.32, 0.72, 0.00, 1.0],
+        duration: 620,
+        desc: "Krótki płynny rozruch (bez gwałtownego skoku na starcie) + długie wygaszanie na końcu w stylu Apple / iOS."
+      }
+    ];
+
+    const cardsEl = document.getElementById("cards");
+
+    function buildCurvePath([x1, y1, x2, y2]) {
+      const sx = (x) => 12 + x * 96;
+      const sy = (y) => 80 - y * 68;
+      return `M ${sx(0)} ${sy(0)} C ${sx(x1)} ${sy(y1)}, ${sx(x2)} ${sy(y2)}, ${sx(1)} ${sy(1)}`;
+    }
+
+    MODELS.forEach((m) => {
+      const card = document.createElement("div");
+      card.className = `card ${m.id === "B" ? "is-b" : ""}`;
+      card.innerHTML = `
+        <div class="card-head">
+          <div>
+            <span class="badge" style="background:${m.color}22;color:${m.color}">${m.id === "B" ? "★ Fioletowy — Mocny hamulec" : "Model " + m.id}</span>
+            <div class="title">${m.name}</div>
+            <span class="code">${m.ease} · ${m.duration}ms</span>
+          </div>
+          <button class="btn btn-sec" data-play="${m.id}" style="padding:8px 12px;font-size:12px">▶ Start</button>
+        </div>
+        <div class="track" id="track-${m.id}">
+          <div class="track-finish"></div>
+          <div class="puck" id="puck-${m.id}" style="background:${m.color}">Model ${m.id}</div>
+        </div>
+        <div class="graph-row">
+          <svg class="curve" viewBox="0 0 120 92">
+            <line x1="12" y1="80" x2="108" y2="80" stroke="#334155" stroke-width="1"/>
+            <line x1="12" y1="12" x2="12" y2="80" stroke="#334155" stroke-width="1"/>
+            <line x1="12" y1="80" x2="108" y2="12" stroke="#1e293b" stroke-dasharray="3 3" stroke-width="1"/>
+            <path d="${buildCurvePath(m.pts)}" fill="none" stroke="${m.color}" stroke-width="3.2" stroke-linecap="round"/>
+          </svg>
+          <div class="desc">${m.desc}</div>
+        </div>
+      `;
+      cardsEl.appendChild(card);
+    });
+
+    function runPuck(m) {
+      const track = document.getElementById(`track-${m.id}`);
+      const puck = document.getElementById(`puck-${m.id}`);
+      const dist = Math.max(40, track.clientWidth - puck.clientWidth - 20);
+      puck.style.transition = "none";
+      puck.style.transform = "translateX(0px)";
+      void puck.offsetWidth;
+      requestAnimationFrame(() => {
+        puck.style.transition = `transform ${m.duration}ms ${m.ease}`;
+        puck.style.transform = `translateX(${dist}px)`;
+      });
+    }
+
+    function resetAll() {
+      MODELS.forEach((m) => {
+        const puck = document.getElementById(`puck-${m.id}`);
+        puck.style.transition = "none";
+        puck.style.transform = "translateX(0px)";
+      });
+    }
+
+    document.getElementById("play-all").addEventListener("click", () => MODELS.forEach(runPuck));
+    document.getElementById("reset-all").addEventListener("click", resetAll);
+    document.querySelectorAll("[data-play]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const m = MODELS.find((x) => x.id === btn.dataset.play);
+        if (m) runPuck(m);
+      });
+    });
+
+    const drawer = document.getElementById("demo-drawer");
+    const dTitle = document.getElementById("drawer-title");
+    const dDesc = document.getElementById("drawer-desc");
+    const dCode = document.getElementById("drawer-code");
+    const dStatus = document.getElementById("drawer-status");
+
+    document.querySelectorAll("[data-drawer]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const m = MODELS.find((x) => x.id === btn.dataset.drawer);
+        if (!m) return;
+        drawer.style.transition = "none";
+        drawer.classList.remove("is-open");
+        drawer.style.borderColor = m.color;
+        dTitle.textContent = m.name;
+        dDesc.textContent = m.desc;
+        dCode.textContent = `${m.ease} · ${m.duration}ms`;
+        dStatus.textContent = `Odtwarzam: ${m.name} (${m.duration} ms)`;
+        void drawer.offsetWidth;
+        requestAnimationFrame(() => {
+          drawer.style.transition = `transform ${m.duration}ms ${m.ease}`;
+          drawer.classList.add("is-open");
+        });
+      });
+    });
+
+    document.getElementById("close-drawer").addEventListener("click", () => {
+      drawer.style.transition = "transform 320ms cubic-bezier(0.4, 0, 1, 1)";
+      drawer.classList.remove("is-open");
+    });
+
+    // Auto-run once on load so the user sees the comparison immediately
+    setTimeout(() => MODELS.forEach(runPuck), 450);
+  </script>
+</body>
+</html>
