@@ -198,6 +198,19 @@
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script src="data.js?v=taskkill-v5"></script>
-  <script src="app.js?v=taskkill-v15"></script>
+  <script src="app.js?v=taskkill-v18"></script>
+  <script>
+    (function () {
+      var link = document.querySelector('link[href*="styles.css"]');
+      if (link) link.href = 'styles.css?v=' + Date.now();
+      if (window.self === window.top) {
+        setInterval(function () {
+          if (!document.querySelector('input:focus, textarea:focus')) {
+            location.reload();
+          }
+        }, 10000);
+      }
+    })();
+  </script>
 </body>
 </html>

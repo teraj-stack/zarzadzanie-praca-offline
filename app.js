@@ -1,9 +1,16 @@
 (() => {
-  const STORAGE_KEY = "managing_work_offline_tasks_v1";
+  const _urlParams = new URLSearchParams(window.location.search);
+  const ACTIVE_MAP_ID = (_urlParams.get("map") || "bmclinic").trim() || "bmclinic";
+  const ACTIVE_MAP_TITLE = (_urlParams.get("title") || "").trim();
+  const MAP_SUFFIX = ACTIVE_MAP_ID === "bmclinic" ? "" : `_${ACTIVE_MAP_ID}`;
+  const API_TASKS_URL = `/api/tasks?map=${encodeURIComponent(ACTIVE_MAP_ID)}`;
+  const API_LAYOUT_URL = `/api/layout?map=${encodeURIComponent(ACTIVE_MAP_ID)}`;
+
+  const STORAGE_KEY = `managing_work_offline_tasks_v1${MAP_SUFFIX}`;
   const THEME_KEY = "managing_work_offline_theme";
-  const PROJECT_TITLE_KEY = "managing_work_project_title_v1";
-  const MINDMAP_POS_KEY = "managing_work_mindmap_pos_v1";
-  const MINDMAP_MEDIA_KEY = "managing_work_mindmap_media_v1";
+  const PROJECT_TITLE_KEY = `managing_work_project_title_v1${MAP_SUFFIX}`;
+  const MINDMAP_POS_KEY = `managing_work_mindmap_pos_v1${MAP_SUFFIX}`;
+  const MINDMAP_MEDIA_KEY = `managing_work_mindmap_media_v1${MAP_SUFFIX}`;
   const MINDMAP_BG_KEY = "managing_work_mindmap_bg_v1";
   const MINDMAP_CUSTOM_BG_KEY = "managing_work_mindmap_custom_bg_v1";
 
@@ -65,8 +72,8 @@
   let draggedId = null;
 
   // MindNode view state
-  let projectTitle = localStorage.getItem(PROJECT_TITLE_KEY) || "bmclinic.co";
-  if (projectTitle === "Zarządzanie Pracą") {
+  let projectTitle = ACTIVE_MAP_TITLE || localStorage.getItem(PROJECT_TITLE_KEY) || (ACTIVE_MAP_ID === "bmclinic" ? "bmclinic.co" : ACTIVE_MAP_ID);
+  if (ACTIVE_MAP_ID === "bmclinic" && projectTitle === "Zarządzanie Pracą") {
     projectTitle = "bmclinic.co";
     localStorage.setItem(PROJECT_TITLE_KEY, projectTitle);
   }
@@ -1011,13 +1018,14 @@
         if (Array.isArray(parsed)) return parsed;
       }
     } catch (_) {}
+    if (ACTIVE_MAP_ID !== "bmclinic") return [];
     return structuredClone(window.INITIAL_TASKS || []);
   }
 
   function saveTasks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
     if (location.protocol.startsWith("http")) {
-      fetch("/api/tasks", {
+      fetch(API_TASKS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tasks),
@@ -1039,7 +1047,7 @@
   async function syncFromDiskIfAvailable() {
     if (!location.protocol.startsWith("http")) return;
     try {
-      const res = await fetch("/api/tasks", { cache: "no-store" });
+      const res = await fetch(API_TASKS_URL, { cache: "no-store" });
       if (res.status === 200) {
         const diskTasks = await res.json();
         if (Array.isArray(diskTasks)) {
@@ -2237,19 +2245,10 @@
     if (Math.abs(dy) < 2 || Math.abs(dx) < 8) {
       return `M ${sx1} ${sy1} L ${sx2} ${sy2}`;
     }
-    const dirX = dx >= 0 ? 1 : -1;
-    const dirY = dy >= 0 ? 1 : -1;
-    // Clean orthogonal rounded-elbow tree connectors (matching the SKILL.md diagram style)
-    const elbowX = sx1 + dx * 0.38;
-    const r = Math.min(26, Math.abs(elbowX - sx1), Math.abs(sx2 - elbowX), Math.abs(dy) / 2);
-    return [
-      `M ${sx1} ${sy1}`,
-      `L ${elbowX - dirX * r} ${sy1}`,
-      `Q ${elbowX} ${sy1} ${elbowX} ${sy1 + dirY * r}`,
-      `L ${elbowX} ${sy2 - dirY * r}`,
-      `Q ${elbowX} ${sy2} ${elbowX + dirX * r} ${sy2}`,
-      `L ${sx2} ${sy2}`,
-    ].join(" ");
+    // Smooth organic cubic Bézier curves (no sharp orthogonal turns)
+    const cx1 = sx1 + dx * 0.48;
+    const cx2 = sx2 - dx * 0.48;
+    return `M ${sx1} ${sy1} C ${cx1} ${sy1}, ${cx2} ${sy2}, ${sx2} ${sy2}`;
   }
 
   function exportMindMapSvg(layout) {
@@ -3195,7 +3194,29 @@
       const rect = viewport.getBoundingClientRect();
       const vw = rect.width || 1100;
       const vh = rect.height || 620;
-      const { minX, maxX, minY, maxY } = layout.computeBounds();
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      const mmNodesEl = shell.querySelector("#mm-nodes");
+      const renderedNodes = mmNodesEl ? mmNodesEl.querySelectorAll(".mn-node") : [];
+      if (renderedNodes.length > 0) {
+        renderedNodes.forEach((el) => {
+          const x1 = el.offsetLeft;
+          const y1 = el.offsetTop;
+          const x2 = x1 + (el.offsetWidth || 160);
+          const y2 = y1 + (el.offsetHeight || 48);
+          if (Math.abs(x1) > 12000 || Math.abs(y1) > 12000) return;
+          minX = Math.min(minX, x1 - 40);
+          maxX = Math.max(maxX, x2 + 40);
+          minY = Math.min(minY, y1 - 30);
+          maxY = Math.max(maxY, y2 + 30);
+        });
+      }
+      if (!Number.isFinite(minX) || !Number.isFinite(minY)) {
+        const b = layout.computeBounds();
+        minX = b.minX;
+        maxX = b.maxX;
+        minY = b.minY;
+        maxY = b.maxY;
+      }
       const bw = Math.max(200, maxX - minX);
       const bh = Math.max(150, maxY - minY);
       const fitScale = Math.min(1.15, Math.max(MIN_SCALE, Math.min((vw - 64) / bw, (vh - 64) / bh)));
@@ -3626,7 +3647,7 @@
       const payload = buildLayoutPayload();
       const txt = JSON.stringify(payload);
       lastLayoutHash = txt;
-      await fetch("/api/layout", {
+      await fetch(API_LAYOUT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: txt,
@@ -3636,7 +3657,7 @@
   async function syncLayoutFromServer() {
     if (!location.protocol.startsWith("http")) return;
     try {
-      const res = await fetch("/api/layout", { cache: "no-store" });
+      const res = await fetch(API_LAYOUT_URL, { cache: "no-store" });
       if (res.status === 204) {
         // Server has no layout yet: if this device has saved positions/media, upload them!
         const localPos = localStorage.getItem(MINDMAP_POS_KEY);

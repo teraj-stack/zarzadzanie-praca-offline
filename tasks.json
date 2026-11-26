@@ -275,7 +275,7 @@
     "id": 19,
     "title": "🩹 Panel przebiegu gojenia ran (DO WYKONANIA)",
     "body": "Dziennik gojenia, objawy alarmowe i zdjęcia kontrolne do wpięcia w /pacjent.",
-    "status": "Paused",
+    "status": "Backlog",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -321,7 +321,7 @@
     "id": 22,
     "title": "📱 Aplikacja dla pacjentów (z Drive — DO WPIĘCIA)",
     "body": "Objawy, objawy alarmowe i rekonwalescencja — propozycja ścieżki /aplikacja-pacjenta.",
-    "status": "Paused",
+    "status": "Backlog",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -414,7 +414,7 @@
     "id": 28,
     "title": "🚀 Landing Page #4: Medycyna estetyczna (Mobile-First)",
     "body": "Dedykowany landing page dla dziedziny Medycyna estetyczna + kampania Facebook / Social Media. Cel: konwersja Kampania → Wykonany zabieg.",
-    "status": "Paused",
+    "status": "Backlog",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -494,7 +494,7 @@
     "id": 33,
     "title": "📣 Kampania FB/Social: Medycyna estetyczna (grafiki + triggery)",
     "body": "Kreacje FB/Social i osobne triggery dla Medycyny estetycznej — osobna baza konwersji Kampania → Zabieg.",
-    "status": "Paused",
+    "status": "Backlog",
     "priority": "Wysoki",
     "type": "Task",
     "labels": [
@@ -510,7 +510,7 @@
     "id": 34,
     "title": "⚡ Akceleracja Gojenia (protokoły + harmonogram)",
     "body": "Pełny moduł akceleracji gojenia po zabiegach: protokoły, etapy regeneracji, zalecenia i szybkie publikowanie treści dla pacjentów (Mobile-First).",
-    "status": "Paused",
+    "status": "Backlog",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -525,7 +525,7 @@
     "id": 35,
     "title": "🩹 Opieka Pozabiegowa & Komunikacja z Pacjentem",
     "body": "Dziennik gojenia, objawy alarmowe, zdjęcia kontrolne i ustandaryzowana aplikacja pacjenta (schemat z flebologii) — Mobile-First.",
-    "status": "Paused",
+    "status": "Backlog",
     "priority": "Wysoki",
     "type": "Feature",
     "labels": [
@@ -782,7 +782,7 @@
   {
     "title": "🏥 Spotkanie z właścicielami klinik — ustalenie adresów i godzin przyjęć (BLOKER KAMPANII)",
     "body": "NIEZBĘDNE: bez potwierdzonych adresów i godzin przyjęć nie możemy wpisać lokalizacji na strony ani ruszyć z kampanią na pacjentów.",
-    "status": "Todo",
+    "status": "Backlog",
     "priority": "Krytyczny",
     "type": "Task",
     "assignee": "Janek",
@@ -828,7 +828,7 @@
   {
     "title": "🏛️ Wizyta u prawnika: jutro 10:00, Praga-Północ (ul. Kłopotowskiego, gabinet nr 6)",
     "body": "Termin: 2026-11-25, godz. 10:00, Urząd Dzielnicy Praga-Północ, ul. Kłopotowskiego, pokój/gabinet nr 6. OBOWIĄZKOWO: zabrać dowód osobisty (bez dowodu nie wejdziemy) + kod wizyty (ma Milenka).",
-    "status": "Todo",
+    "status": "Backlog",
     "priority": "Krytyczny",
     "type": "Task",
     "assignee": "Wspólne",
@@ -855,5 +855,20 @@
     "endDate": "2026-11-24",
     "url": "http://localhost:3006/design-studio",
     "id": 56
+  },
+  {
+    "id": 57,
+    "title": "📱 Adaptacja i uproszczenie tablicy na telefony komórkowe (Mobile-First)",
+    "body": "Uproszczenie widoku Tablicy Kanban oraz Mapy Myśli w Chronos Vault pod małe ekrany smartfonów: kompaktowe karty, nawigacja kciukiem i szybkie przełączanie kolumn.",
+    "status": "Done",
+    "priority": "Wysoki",
+    "type": "Feature",
+    "labels": [
+      "UX / Mobile",
+      "Chronos Vault"
+    ],
+    "assignee": "BM Clinic",
+    "startDate": "2026-11-26",
+    "endDate": "2026-11-28"
   }
 ]
